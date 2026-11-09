@@ -123,6 +123,30 @@
       100% { background-position: 0% 50%; }
     }
 
+    /* Animaciones y Estados de Autoverificación OTP */
+    @keyframes otpShakeAnimation {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+
+    .input-shake {
+      animation: otpShakeAnimation 0.4s ease-in-out both !important;
+    }
+
+    .input-error {
+      border-color: #ff3344 !important;
+      color: #ff3344 !important;
+      box-shadow: 0 0 16px rgba(255, 51, 68, 0.45) !important;
+    }
+
+    .input-success {
+      border-color: #00ff88 !important;
+      color: #00ff88 !important;
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.45) !important;
+      background: rgba(0, 255, 136, 0.05) !important;
+    }
+
     /* ==========================================================================
        3. BOTÓN DE RETORNO ESTILO iOS (.btn-back-ios)
        ========================================================================== */
@@ -1167,7 +1191,7 @@
     </div>
   </div>
 
-  <!-- LOADER TRICOLOR 3 ARCOS -->
+  <!-- LOADER TRICOLOR 3 ARCOS CON BARRA DE PROGRESO FLUIDA (MÁXIMO 85-90% TEMPORAL) -->
   <div class="loading-overlay" id="loadingOverlay">
     <div style="display:flex; flex-direction:column; align-items:center; gap:16px;">
       <div class="tricolor-spinner">
@@ -1181,6 +1205,10 @@
       <span style="font-size:0.88rem; font-weight:700; color:var(--text-muted);" id="loadingMsg">
         Sincronizando Sistema Central...
       </span>
+      <div style="width:220px; height:6px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden; margin-top:-4px;">
+        <div id="globalProgressBarFill" style="height:100%; width:0%; background:linear-gradient(90deg, #FFCC00, #0066FF, #CF142B); border-radius:4px; transition:width 0.25s ease-out;"></div>
+      </div>
+      <div id="globalProgressPercentage" style="font-size:0.75rem; color:#38bdf8; font-weight:700; font-family:monospace; margin-top:-8px;">0%</div>
     </div>
   </div>
 
@@ -1236,6 +1264,9 @@
         applyTheme(state.theme === 'dark' ? 'light' : 'dark');
       }
 
+      let globalLoaderInterval = null;
+      let globalLoaderProgress = 0;
+
       function startProgressBar() {
         const p = document.getElementById('topProgressBar');
         if (p) p.classList.add('active');
@@ -1248,13 +1279,58 @@
 
       function showLoading(msg = "Sincronizando Sistema Central...") {
         startProgressBar();
-        document.getElementById('loadingMsg').innerText = msg;
-        document.getElementById('loadingOverlay').classList.add('active');
+        const overlay = document.getElementById('loadingOverlay');
+        const lMsg = document.getElementById('loadingMsg');
+        const fill = document.getElementById('globalProgressBarFill');
+        const text = document.getElementById('globalProgressPercentage');
+
+        if (lMsg) lMsg.innerText = msg;
+        if (overlay) overlay.classList.add('active');
+
+        globalLoaderProgress = 15;
+        if (fill) fill.style.width = globalLoaderProgress + '%';
+        if (text) text.innerText = globalLoaderProgress + '%';
+
+        if (globalLoaderInterval) clearInterval(globalLoaderInterval);
+        globalLoaderInterval = setInterval(() => {
+          // La animación solo sube automáticamente hasta un máximo temporal (85-90%) mientras espera
+          if (globalLoaderProgress < 88) {
+            globalLoaderProgress += Math.floor(Math.random() * 6) + 3;
+            if (globalLoaderProgress > 88) globalLoaderProgress = 88;
+            if (fill) fill.style.width = globalLoaderProgress + '%';
+            if (text) text.innerText = globalLoaderProgress + '%';
+          }
+        }, 120);
       }
 
-      function hideLoading() {
+      function hideLoading(isSuccess = true, errorMsg = "") {
+        if (globalLoaderInterval) {
+          clearInterval(globalLoaderInterval);
+          globalLoaderInterval = null;
+        }
+
         stopProgressBar();
-        document.getElementById('loadingOverlay').classList.remove('active');
+        const overlay = document.getElementById('loadingOverlay');
+        const fill = document.getElementById('globalProgressBarFill');
+        const text = document.getElementById('globalProgressPercentage');
+
+        if (isSuccess) {
+          // Salta de inmediato al 100%, desvanece suavemente el telón de carga
+          if (fill) fill.style.width = '100%';
+          if (text) text.innerText = '100%';
+
+          setTimeout(() => {
+            if (overlay) overlay.classList.remove('active');
+            globalLoaderProgress = 0;
+          }, 220);
+        } else {
+          // En caso de error: detén la animación de inmediato, quita el telón y muestra toast de alerta
+          if (overlay) overlay.classList.remove('active');
+          globalLoaderProgress = 0;
+          if (errorMsg) {
+            showToast(errorMsg, "danger");
+          }
+        }
       }
 
       function showToast(msg, type = "success") {
@@ -1365,9 +1441,17 @@
           });
           const json = await resp.json();
           stopProgressBar();
+
+          if (json && json.status === 'error') {
+            const errDetalle = json.mensaje || json.error || json.msg || "Error en el Servidor Central";
+            hideLoading(false, errDetalle);
+            throw new Error(errDetalle);
+          }
+
           return json;
         } catch (err) {
           stopProgressBar();
+          hideLoading(false, err.message);
           throw err;
         }
       }
@@ -1449,20 +1533,40 @@
                 </div>
 
                 <div id="formRegStepB" style="display:none; text-align:center;">
-                  <h4 style="font-size:1.05rem; font-weight:800; margin-bottom:8px;">Validación de Seguridad OTP</h4>
-                  <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:18px;">
-                    Ingrese el código de 6 dígitos despachado a su correo institucional:
-                  </p>
-                  <div style="display:flex; justify-content:center; gap:8px; margin-bottom:20px;">
-                    <input type="text" maxlength="1" class="form-input" id="otp_0" style="width:40px; text-align:center; font-size:1.3rem; font-weight:800;">
-                    <input type="text" maxlength="1" class="form-input" id="otp_1" style="width:40px; text-align:center; font-size:1.3rem; font-weight:800;">
-                    <input type="text" maxlength="1" class="form-input" id="otp_2" style="width:40px; text-align:center; font-size:1.3rem; font-weight:800;">
-                    <input type="text" maxlength="1" class="form-input" id="otp_3" style="width:40px; text-align:center; font-size:1.3rem; font-weight:800;">
-                    <input type="text" maxlength="1" class="form-input" id="otp_4" style="width:40px; text-align:center; font-size:1.3rem; font-weight:800;">
-                    <input type="text" maxlength="1" class="form-input" id="otp_5" style="width:40px; text-align:center; font-size:1.3rem; font-weight:800;">
+                  <div style="display:inline-block; padding:4px 12px; background:rgba(0,102,255,0.15); border:1px solid rgba(0,102,255,0.3); border-radius:20px; font-size:0.75rem; color:#38bdf8; font-weight:700; margin-bottom:12px;">
+                    VERIFICACIÓN DE SEGURIDAD
                   </div>
-                  <button type="button" class="btn-tricolor" onclick="AppCore.handleConfirmOtp()">
-                    <span>Finalizar Registro</span>
+                  <h4 style="font-size:1.1rem; font-weight:800; margin-bottom:6px;">Autoverificación de Código OTP</h4>
+                  <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:18px;">
+                    Ingrese o pegue el código de 6 dígitos enviado a su correo institucional:
+                  </p>
+                  <div class="otp-box-wrapper" style="position:relative; max-width:240px; margin:0 auto 12px;">
+                    <input type="text"
+                           id="regOtpCode"
+                           class="form-input otp-autoverify-input"
+                           maxlength="6"
+                           placeholder="000000"
+                           autocomplete="one-time-code"
+                           inputmode="numeric"
+                           style="text-align:center; font-size:1.7rem; letter-spacing:8px; font-weight:800; font-family:monospace; padding:10px; transition:all 0.3s ease;">
+                  </div>
+                  <div id="otpFeedbackMsg" style="min-height:22px; font-size:0.82rem; font-weight:700; transition:all 0.3s ease; margin-bottom:12px;"></div>
+                  <div style="font-size:0.75rem; color:var(--text-muted);">
+                    El sistema validará automáticamente su código al ingresar los 6 dígitos.
+                  </div>
+                </div>
+
+                <div id="formRegStepC" style="display:none; text-align:center; padding:12px 0;">
+                  <div style="width:56px; height:56px; border-radius:50%; background:rgba(0,255,136,0.15); border:2px solid #00ff88; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <h4 style="font-size:1.15rem; font-weight:800; color:#ffffff; margin-bottom:8px;">¡Solicitud de Registro Enviada!</h4>
+                  <p style="font-size:0.84rem; color:var(--text-muted); line-height:1.5; margin-bottom:20px;">
+                    Su cuenta se encuentra formalmente registrada en estado <strong style="color:var(--color-yellow);">PENDIENTE DE APROBACIÓN</strong>.<br>
+                    La Dirección de Comunas revisará y activará sus permisos institucionales.
+                  </p>
+                  <button type="button" class="btn-tricolor" onclick="AppCore.switchAuthTab('login')">
+                    <span>Volver al Inicio de Sesión</span>
                   </button>
                 </div>
               </div>
@@ -1494,6 +1598,8 @@
           fR.style.display = 'block';
           document.getElementById('formRegStepA').style.display = 'block';
           document.getElementById('formRegStepB').style.display = 'none';
+          const stepC = document.getElementById('formRegStepC');
+          if (stepC) stepC.style.display = 'none';
           tR.style.background = 'var(--surface-glass-card)';
           tR.style.color = 'var(--text-main)';
           tL.style.background = 'transparent';
@@ -1509,19 +1615,20 @@
         showLoading("Sincronizando credenciales en el Servidor Central...");
         try {
           const res = await postBackend({ accion: "login", identificador: u, password: p });
-          hideLoading();
+          hideLoading(true);
 
-          if (res.ok && res.user) {
-            state.currentUser = res.user;
-            localStorage.setItem('inst_auth_user', JSON.stringify(res.user));
+          const userObj = res.usuario || res.user;
+          if (res.ok && userObj) {
+            state.currentUser = userObj;
+            localStorage.setItem('inst_auth_user', JSON.stringify(userObj));
             updateUserNavDisplay();
             showDashboardMenu();
-            showToast(`Bienvenido(a), ${res.user.usuario} (${res.user.rango || "ANALISTA"}).`, "success");
+            showToast(`Bienvenido(a), ${userObj.nombre || userObj.usuario || userObj.id} (${userObj.rango || "ANALISTA"}).`, "success");
           } else {
             showAuthAlert(res.msg || "Credenciales no autorizadas.", "danger");
           }
         } catch (err) {
-          hideLoading();
+          hideLoading(false, err.message);
           showAuthAlert(err.message, "danger");
         }
       }
@@ -1536,57 +1643,114 @@
         showLoading("Despachando código OTP por correo institucional...");
         try {
           const res = await postBackend({ accion: "solicitar_codigo", usuario: u, correo: em });
-          hideLoading();
-          if (res.ok) {
+          hideLoading(true);
+          if (res && (res.ok || res.status === 'ok')) {
             document.getElementById('formRegStepA').style.display = 'none';
             document.getElementById('formRegStepB').style.display = 'block';
-            showToast("Código de 6 dígitos despachado.", "info");
-          } else {
-            showAuthAlert(res.msg, "danger");
-          }
-        } catch (err) {
-          hideLoading();
-          showAuthAlert(err.message, "danger");
-        }
-      }
-
-      function setupOtpListeners() {
-        for (let i = 0; i < 6; i++) {
-          const inp = document.getElementById(`otp_${i}`);
-          if (!inp) continue;
-          inp.addEventListener('input', (e) => {
-            if (e.target.value && i < 5) {
-              const next = document.getElementById(`otp_${i+1}`);
-              if (next) next.focus();
+            const otpInp = document.getElementById('regOtpCode');
+            if (otpInp) {
+              otpInp.value = '';
+              otpInp.disabled = false;
+              otpInp.classList.remove('input-shake', 'input-error', 'input-success');
+              setTimeout(() => otpInp.focus(), 150);
             }
-          });
+            showToast("Código de 6 dígitos despachado al correo.", "info");
+          } else {
+            showAuthAlert(res.msg || "Error al solicitar código OTP.", "danger");
+          }
+        } catch (err) {
+          hideLoading(false, err.message);
+          showAuthAlert(err.message, "danger");
         }
       }
 
-      async function handleConfirmOtp() {
-        let code = "";
-        for (let i = 0; i < 6; i++) code += (document.getElementById(`otp_${i}`).value || "");
+      // ==========================================================================
+      // AUTOVERIFICACIÓN INTELIGENTE DE CÓDIGO (SIN BOTÓN MANUAL)
+      // ==========================================================================
+      function setupOtpListeners() {
+        const inp = document.getElementById('regOtpCode');
+        const msg = document.getElementById('otpFeedbackMsg');
+        if (!inp) return;
 
-        showLoading("Confirmando solicitud de registro...");
-        try {
-          const res = await postBackend({
-            accion: "registrar",
-            usuario: tempReg.usuario,
-            correo: tempReg.correo,
-            password: tempReg.password,
-            otp: code
-          });
-          hideLoading();
-          if (res.ok) {
-            switchAuthTab('login');
-            showAuthAlert("Solicitud enviada. Tu usuario se encuentra en revisión administrativa.", "success");
-          } else {
-            showAuthAlert(res.msg, "danger");
+        let isVerifying = false;
+
+        inp.addEventListener('input', async function () {
+          let val = this.value.trim().toUpperCase();
+          this.value = val;
+
+          this.classList.remove('input-shake', 'input-error');
+          if (msg) {
+            msg.innerText = '';
+            msg.style.color = '';
           }
-        } catch (err) {
-          hideLoading();
-          showAuthAlert(err.message, "danger");
-        }
+
+          // Al detectar que el usuario ingresó o pegó la totalidad de los 6 dígitos
+          if (val.length === 6 && !isVerifying) {
+            isVerifying = true;
+            this.disabled = true;
+
+            if (msg) {
+              msg.innerText = 'Validando código de seguridad en tiempo real...';
+              msg.style.color = '#38bdf8';
+            }
+
+            try {
+              const res = await postBackend({
+                accion: "registrar",
+                usuario: tempReg.usuario,
+                correo: tempReg.correo,
+                password: tempReg.password,
+                otp: val
+              });
+
+              if (res && (res.ok || res.status === 'ok')) {
+                // Feedback visual instantáneo de ÉXITO
+                this.classList.remove('input-shake', 'input-error');
+                this.classList.add('input-success');
+                if (msg) {
+                  msg.style.color = '#00ff88';
+                  msg.innerText = '✓ Código verificado exitosamente.';
+                }
+
+                setTimeout(() => {
+                  document.getElementById('formRegStepB').style.display = 'none';
+                  document.getElementById('formRegStepC').style.display = 'block';
+                  isVerifying = false;
+                }, 800);
+
+              } else {
+                // Feedback visual instantáneo de ERROR: sacudida sutil y rojo nítido
+                this.disabled = false;
+                this.classList.remove('input-success');
+                this.classList.add('input-shake', 'input-error');
+                if (msg) {
+                  msg.style.color = '#ff3344';
+                  msg.innerText = (res && (res.msg || res.mensaje)) ? (res.msg || res.mensaje) : 'Código inválido o expirado';
+                }
+
+                // Limpia el campo para reintentar
+                setTimeout(() => {
+                  this.value = '';
+                  this.focus();
+                  isVerifying = false;
+                }, 650);
+              }
+            } catch (err) {
+              this.disabled = false;
+              this.classList.remove('input-success');
+              this.classList.add('input-shake', 'input-error');
+              if (msg) {
+                msg.style.color = '#ff3344';
+                msg.innerText = err.message || 'Código inválido o expirado';
+              }
+              setTimeout(() => {
+                this.value = '';
+                this.focus();
+                isVerifying = false;
+              }, 650);
+            }
+          }
+        });
       }
 
       function showAuthAlert(msg, type) {
@@ -2169,25 +2333,25 @@
               // Acciones dinámicas según el estado
               if (est === 'PENDIENTE') {
                 actionButtons += `
-                  <button class="action-btn-sm action-btn-approve" onclick="AppCore.changeUserStatus('${u.usuario}', 'ACTIVO')">
+                  <button class="action-btn-sm action-btn-approve" onclick="AppCore.changeUserStatus('${u.usuario}', 'ACTIVO', '${rango}')">
                     ✓ Aprobar
                   </button>
-                  <button class="action-btn-sm action-btn-reject" onclick="AppCore.changeUserStatus('${u.usuario}', 'RECHAZAR')">
+                  <button class="action-btn-sm action-btn-reject" onclick="AppCore.changeUserStatus('${u.usuario}', 'RECHAZAR', '${rango}')">
                     ✕ Rechazar
                   </button>
                 `;
               } else if (est === 'ACTIVO') {
                 actionButtons += `
-                  <button class="action-btn-sm action-btn-suspend" onclick="AppCore.changeUserStatus('${u.usuario}', 'SUSPENDIDO')">
+                  <button class="action-btn-sm action-btn-suspend" onclick="AppCore.changeUserStatus('${u.usuario}', 'SUSPENDIDO', '${rango}')">
                     ⏸ Suspender
                   </button>
                 `;
               } else if (est === 'SUSPENDIDO') {
                 actionButtons += `
-                  <button class="action-btn-sm action-btn-approve" onclick="AppCore.changeUserStatus('${u.usuario}', 'ACTIVO')">
+                  <button class="action-btn-sm action-btn-approve" onclick="AppCore.changeUserStatus('${u.usuario}', 'ACTIVO', '${rango}')">
                     ✓ Reactivar
                   </button>
-                  <button class="action-btn-sm action-btn-reject" onclick="AppCore.changeUserStatus('${u.usuario}', 'RECHAZAR')">
+                  <button class="action-btn-sm action-btn-reject" onclick="AppCore.changeUserStatus('${u.usuario}', 'RECHAZAR', '${rango}')">
                     ✕ Eliminar
                   </button>
                 `;
@@ -2213,27 +2377,28 @@
         }
       }
 
-      async function changeUserStatus(usuario, nuevoEstado) {
-        showLoading(`Actualizando a ${nuevoEstado} en el Servidor Central...`);
+      async function changeUserStatus(usuario, nuevoEstado, rango) {
+        showLoading(`Actualizando usuario ${usuario} (${nuevoEstado})...`);
         try {
           const res = await postBackend({
             accion: "admin_accion",
             subaction: "cambiar_estado_usuario",
             pin_maestro: state.cachedMasterPin,
             usuario: usuario,
-            nuevo_estado: nuevoEstado
+            nuevo_estado: nuevoEstado,
+            rango: rango,
+            app_url: window.location.href.split('#')[0].split('?')[0]
           });
-          hideLoading();
+          hideLoading(true);
 
-          if (res.ok) {
-            showToast(res.msg);
+          if (res && (res.ok || res.status === 'ok')) {
+            showToast(res.msg || `Usuario ${usuario} actualizado.`);
             loadAdminUsers();
           } else {
-            alert(res.msg || "Error al actualizar estado.");
+            showToast(res.msg || "Error al actualizar estado del usuario.", "danger");
           }
         } catch (err) {
-          hideLoading();
-          alert(err.message);
+          hideLoading(false, err.message);
         }
       }
 
@@ -2339,12 +2504,13 @@
             rango: rango,
             nuevo_estado: estado,
             modulos_lectura: modLectura.join(","),
-            modulos_escritura: modEscritura.join(",")
+            modulos_escritura: modEscritura.join(","),
+            app_url: window.location.href.split('#')[0].split('?')[0]
           });
 
-          hideLoading();
+          hideLoading(true);
 
-          if (res.ok) {
+          if (res && (res.ok || res.status === 'ok')) {
             showToast(`Permisos de ${user} actualizados a ${rango}.`, "success");
 
             if (state.currentUser && state.currentUser.usuario.toLowerCase() === user.toLowerCase()) {
@@ -2357,11 +2523,10 @@
 
             loadAdminUsers();
           } else {
-            alert(res.msg || "Error al actualizar permisos.");
+            showToast(res.msg || "Error al actualizar permisos.", "danger");
           }
         } catch (err) {
-          hideLoading();
-          alert(err.message);
+          hideLoading(false, err.message);
         }
       }
 
@@ -2470,15 +2635,14 @@
           });
           hideLoading();
 
-          if (res.ok) {
-            showToast(`Módulo ${modId} actualizado con éxito.`);
+          if (res && (res.ok || res.status === 'ok')) {
+            showToast(res.msg || `Módulo ${modId} actualizado con éxito.`);
             loadModules();
           } else {
-            alert(res.msg || "Error al actualizar estado.");
+            showToast(res.msg || "Error al actualizar configuración del módulo.", "danger");
           }
         } catch (err) {
-          hideLoading();
-          alert(err.message);
+          hideLoading(false, err.message);
         }
       }
 
