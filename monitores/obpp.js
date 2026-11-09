@@ -4,17 +4,8 @@
  * SISTEMA CENTRAL DE GESTIÓN Y MONITOREO INSTITUCIONAL
  * MÓDULO ESPECIALIZADO: Monitor Dinámico OBPP Monagas (Consejos Comunales y Vocerías)
  * Archivo: monitores/obpp.js
- * Versión: 6.8.0 - Visuales Fundacomunal, Cero Emojis (Pure SVG), Modo Claro / Oscuro Nativo
+ * Versión: 6.8.1 - Sincronización Total con Backend Google Sheets 1370 CC
  * =========================================================================================
- * CARACTERÍSTICAS PRINCIPALES:
- * 1. Estándar Modular Puro: window.MonitorOBPP = { montar: fn, desmontar: fn }
- * 2. Visuales Institucionales OBPP: Orbes tricolor ambientales, loader de 3 anillos giratorios y barra fluida.
- * 3. Cero Emojis: Reemplazo integral por imágenes vectoriales SVG limpias y optimizadas.
- * 4. Animaciones Fluidas Estilo iPhone: Curvas de aceleración cubic-bezier y transiciones iOS.
- * 5. Soporte Nativo de Temas: Modo Oscuro Profundo y Modo Claro de alta legibilidad sincronizado con el cascarón principal.
- * 6. Preparado para Futuras Metas: Estructura extensible para metas territoriales y de renovación.
- * 7. Filtros Geográficos en Cascada, Calendario de Vencimiento, KPIs analíticos y Resumen Parroquial (Tabla / Tarjetas).
- * 8. Impresión / PDF con 3 modalidades (Solo Consolidado, Lista CC, Ambos) y reporte personalizado.
  */
 
 window.MonitorOBPP = (function () {
@@ -27,9 +18,8 @@ window.MonitorOBPP = (function () {
   let modoVistaTabla = true;
   let loaderInterval = null;
   let searchDebounceTimer = null;
-  let modoModal = 'EDITAR'; // 'EDITAR' o 'NUEVO'
+  let modoModal = 'EDITAR';
 
-  // Arquitectura preparada para futuras metas institucionales
   let metasInstitucionales = {
     metaTotalMonagas: 1370,
     metaRenovacionPct: 100,
@@ -48,9 +38,6 @@ window.MonitorOBPP = (function () {
     rangoDias: 'TODOS'
   };
 
-  /**
-   * Catálogo de Iconos Vectoriales SVG (Cero Emojis)
-   */
   const SVG = {
     printer: `<svg class="obpp-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>`,
     chevronDown: `<svg class="obpp-svg obpp-svg-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`,
@@ -76,9 +63,6 @@ window.MonitorOBPP = (function () {
     cube: `<svg class="obpp-svg obpp-core-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>`
   };
 
-  /**
-   * Monta el monitor especializado en el contenedor asignado
-   */
   async function montar(contenedor) {
     containerRef = contenedor;
     injectScopedStyles();
@@ -102,9 +86,6 @@ window.MonitorOBPP = (function () {
     if (styleEl) styleEl.remove();
   }
 
-  /**
-   * Inyecta estilos aislados con soporte nativo para Modo Oscuro y Modo Claro
-   */
   function injectScopedStyles() {
     if (document.getElementById('styles-monitor-obpp')) return;
     const style = document.createElement('style');
@@ -141,7 +122,6 @@ window.MonitorOBPP = (function () {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
       }
 
-      /* Adaptación Dinámica al Modo Claro */
       [data-theme="light"] #obpp-monitor-scope {
         --obpp-bg-base: #f8fafc;
         --obpp-bg-card: rgba(255, 255, 255, 0.94);
@@ -164,663 +144,201 @@ window.MonitorOBPP = (function () {
         --obpp-shadow: 0 10px 30px rgba(0, 36, 125, 0.08);
       }
 
-      /* Íconos SVG Generales */
-      .obpp-svg {
-        width: 17px;
-        height: 17px;
-        flex-shrink: 0;
-        vertical-align: middle;
-      }
+      .obpp-svg { width: 17px; height: 17px; flex-shrink: 0; vertical-align: middle; }
       .obpp-svg-xs { width: 12px; height: 12px; }
       .obpp-svg-sm { width: 14px; height: 14px; }
       .obpp-svg-lg { width: 22px; height: 22px; }
 
-      /* Fondo con Orbes Ambientales Tricolor y Animación iOS */
-      .obpp-tricolor-bg {
-        position: fixed;
-        inset: 0;
-        z-index: -1;
-        overflow: hidden;
-        pointer-events: none;
-      }
-      .obpp-orb {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(95px);
-        opacity: 0.45;
-        will-change: transform;
-      }
-      [data-theme="light"] .obpp-orb {
-        opacity: 0.12;
-        filter: blur(110px);
-      }
-      .obpp-orb-amarillo {
-        width: 430px;
-        height: 430px;
-        background: radial-gradient(circle, #facc15 0%, #ca8a04 100%);
-        top: -8%;
-        left: -6%;
-        animation: obppFloatAmarillo 14s ease-in-out infinite alternate;
-      }
-      .obpp-orb-azul {
-        width: 490px;
-        height: 490px;
-        background: radial-gradient(circle, #2563eb 0%, #1e3a8a 100%);
-        top: 25%;
-        right: -10%;
-        animation: obppFloatAzul 18s ease-in-out infinite alternate;
-      }
-      .obpp-orb-rojo {
-        width: 450px;
-        height: 450px;
-        background: radial-gradient(circle, #ef4444 0%, #991b1b 100%);
-        bottom: -10%;
-        left: 20%;
-        animation: obppFloatRojo 16s ease-in-out infinite alternate;
-      }
-      @keyframes obppFloatAmarillo {
-        0% { transform: translate(0,0) scale(1); }
-        50% { transform: translate(120px,80px) scale(1.12); }
-        100% { transform: translate(40px,160px) scale(0.95); }
-      }
-      @keyframes obppFloatAzul {
-        0% { transform: translate(0,0) scale(1); }
-        50% { transform: translate(-140px,-60px) scale(1.15); }
-        100% { transform: translate(-60px,110px) scale(0.92); }
-      }
-      @keyframes obppFloatRojo {
-        0% { transform: translate(0,0) scale(1); }
-        50% { transform: translate(90px,-110px) scale(1.1); }
-        100% { transform: translate(-80px,-40px) scale(1.05); }
-      }
+      .obpp-tricolor-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+      .obpp-orb { position: absolute; border-radius: 50%; filter: blur(95px); opacity: 0.45; will-change: transform; }
+      [data-theme="light"] .obpp-orb { opacity: 0.12; filter: blur(110px); }
+      .obpp-orb-amarillo { width: 430px; height: 430px; background: radial-gradient(circle, #facc15 0%, #ca8a04 100%); top: -8%; left: -6%; animation: obppFloatAmarillo 14s ease-in-out infinite alternate; }
+      .obpp-orb-azul { width: 490px; height: 490px; background: radial-gradient(circle, #2563eb 0%, #1e3a8a 100%); top: 25%; right: -10%; animation: obppFloatAzul 18s ease-in-out infinite alternate; }
+      .obpp-orb-rojo { width: 450px; height: 450px; background: radial-gradient(circle, #ef4444 0%, #991b1b 100%); bottom: -10%; left: 20%; animation: obppFloatRojo 16s ease-in-out infinite alternate; }
 
-      /* Loader Interno de Tres Anillos Giratorios */
+      @keyframes obppFloatAmarillo { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(120px,80px) scale(1.12); } 100% { transform: translate(40px,160px) scale(0.95); } }
+      @keyframes obppFloatAzul { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(-140px,-60px) scale(1.15); } 100% { transform: translate(-60px,110px) scale(0.92); } }
+      @keyframes obppFloatRojo { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(90px,-110px) scale(1.1); } 100% { transform: translate(-80px,-40px) scale(1.05); } }
+
       #obppLoader {
-        position: fixed;
-        inset: 0;
-        background: rgba(6, 9, 19, 0.90);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        transition: opacity 0.35s ease, transform 0.35s ease;
+        position: fixed; inset: 0; background: rgba(6, 9, 19, 0.90);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        z-index: 9999; transition: opacity 0.35s ease, transform 0.35s ease;
       }
-      [data-theme="light"] #obppLoader {
-        background: rgba(248, 250, 252, 0.92);
-      }
-      #obppLoader.fade-out {
-        opacity: 0;
-        transform: scale(1.08);
-        pointer-events: none;
-      }
-      .obpp-loader-circle-wrap {
-        position: relative;
-        width: 105px;
-        height: 105px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 20px;
-      }
-      .obpp-ring {
-        position: absolute;
-        border-radius: 50%;
-        border: 3px solid transparent;
-      }
-      .obpp-ring-1 {
-        width: 100%;
-        height: 100%;
-        border-top-color: var(--obpp-amarillo);
-        border-left-color: var(--obpp-amarillo);
-        animation: obppSpinRight 1.6s cubic-bezier(0.68,-0.55,0.27,1.55) infinite;
-      }
-      .obpp-ring-2 {
-        width: 78%;
-        height: 78%;
-        border-right-color: var(--obpp-azul);
-        border-bottom-color: var(--obpp-azul);
-        animation: obppSpinLeft 1.3s linear infinite;
-      }
-      .obpp-ring-3 {
-        width: 56%;
-        height: 56%;
-        border-top-color: var(--obpp-rojo);
-        border-right-color: var(--obpp-rojo);
-        animation: obppSpinRight 1s ease-in-out infinite;
-      }
-      .obpp-core-svg {
-        width: 24px;
-        height: 24px;
-        color: var(--obpp-text);
-        animation: obppPulseCore 1.5s ease-in-out infinite;
-      }
+      [data-theme="light"] #obppLoader { background: rgba(248, 250, 252, 0.92); }
+      #obppLoader.fade-out { opacity: 0; transform: scale(1.08); pointer-events: none; }
+      .obpp-loader-circle-wrap { position: relative; width: 105px; height: 105px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+      .obpp-ring { position: absolute; border-radius: 50%; border: 3px solid transparent; }
+      .obpp-ring-1 { width: 100%; height: 100%; border-top-color: var(--obpp-amarillo); border-left-color: var(--obpp-amarillo); animation: obppSpinRight 1.6s cubic-bezier(0.68,-0.55,0.27,1.55) infinite; }
+      .obpp-ring-2 { width: 78%; height: 78%; border-right-color: var(--obpp-azul); border-bottom-color: var(--obpp-azul); animation: obppSpinLeft 1.3s linear infinite; }
+      .obpp-ring-3 { width: 56%; height: 56%; border-top-color: var(--obpp-rojo); border-right-color: var(--obpp-rojo); animation: obppSpinRight 1s ease-in-out infinite; }
+      .obpp-core-svg { width: 24px; height: 24px; color: var(--obpp-text); animation: obppPulseCore 1.5s ease-in-out infinite; }
+
       @keyframes obppSpinRight { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
       @keyframes obppSpinLeft { 0% { transform: rotate(360deg); } 100% { transform: rotate(0deg); } }
-      @keyframes obppPulseCore {
-        0%, 100% { transform: scale(0.9); opacity: 0.75; }
-        50% { transform: scale(1.15); opacity: 1; }
-      }
-      .obpp-loader-title {
-        font-size: 1.05rem;
-        font-weight: 800;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--obpp-text);
-        margin-bottom: 6px;
-      }
-      .obpp-loader-sub {
-        font-size: 0.78rem;
-        color: var(--obpp-text-muted);
-        margin-bottom: 14px;
-      }
-      .obpp-progress-container {
-        width: 260px;
-        height: 6px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 4px;
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-      }
-      [data-theme="light"] .obpp-progress-container {
-        background: rgba(0, 36, 125, 0.08);
-        border-color: rgba(0, 36, 125, 0.15);
-      }
-      .obpp-progress-fill {
-        height: 100%;
-        width: 0%;
-        background: linear-gradient(90deg, var(--obpp-amarillo), var(--obpp-azul), var(--obpp-rojo));
-        border-radius: 4px;
-        transition: width 0.35s ease-out;
-      }
-      .obpp-progress-pct {
-        font-size: 0.72rem;
-        color: var(--obpp-accent);
-        font-weight: 700;
-        margin-top: 6px;
-        letter-spacing: 0.05em;
-      }
+      @keyframes obppPulseCore { 0%, 100% { transform: scale(0.9); opacity: 0.75; } 50% { transform: scale(1.15); opacity: 1; } }
 
-      /* Barra Superior & Acciones */
+      .obpp-loader-title { font-size: 1.05rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--obpp-text); margin-bottom: 6px; }
+      .obpp-loader-sub { font-size: 0.78rem; color: var(--obpp-text-muted); margin-bottom: 14px; }
+      .obpp-progress-container { width: 260px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.15); }
+      [data-theme="light"] .obpp-progress-container { background: rgba(0, 36, 125, 0.08); border-color: rgba(0, 36, 125, 0.15); }
+      .obpp-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--obpp-amarillo), var(--obpp-azul), var(--obpp-rojo)); border-radius: 4px; transition: width 0.35s ease-out; }
+      .obpp-progress-pct { font-size: 0.72rem; color: var(--obpp-accent); font-weight: 700; margin-top: 6px; letter-spacing: 0.05em; }
+
       .obpp-top-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 16px;
-        padding: 14px 18px;
-        background: var(--obpp-bg-card);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid var(--obpp-border);
-        border-radius: 14px;
-        position: relative;
-        overflow: visible;
-        z-index: 50;
-        box-shadow: var(--obpp-shadow);
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; padding: 14px 18px;
+        background: var(--obpp-bg-card); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--obpp-border); border-radius: 14px; position: relative; z-index: 50; box-shadow: var(--obpp-shadow);
       }
       .obpp-top-bar::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 3px;
+        content: ""; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
         background: linear-gradient(90deg, var(--obpp-amarillo) 0%, var(--obpp-azul) 50%, var(--obpp-rojo) 100%);
-        border-bottom-left-radius: 14px;
-        border-bottom-right-radius: 14px;
+        border-bottom-left-radius: 14px; border-bottom-right-radius: 14px;
       }
       .obpp-brand { display: flex; align-items: center; gap: 12px; }
-      .obpp-brand-badge {
-        width: 42px;
-        height: 42px;
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid var(--obpp-border);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--obpp-amarillo);
-      }
+      .obpp-brand-badge { width: 42px; height: 42px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--obpp-border); display: flex; align-items: center; justify-content: center; color: var(--obpp-amarillo); }
       [data-theme="light"] .obpp-brand-badge { background: rgba(0, 36, 125, 0.05); }
       .obpp-brand h2 { font-size: 1.15rem; font-weight: 800; color: var(--obpp-text); margin: 0; }
       .obpp-brand p { font-size: 0.72rem; color: var(--obpp-text-muted); margin-top: 2px; }
-
       .obpp-top-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
       .obpp-btn-action {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid var(--obpp-border);
-        color: var(--obpp-text);
-        padding: 8px 13px;
-        border-radius: 9px;
-        font-size: 0.76rem;
-        font-weight: 700;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        transition: var(--obpp-transition-ios);
-        text-decoration: none;
+        background: rgba(255, 255, 255, 0.08); border: 1px solid var(--obpp-border); color: var(--obpp-text);
+        padding: 8px 13px; border-radius: 9px; font-size: 0.76rem; font-weight: 700; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 7px; transition: var(--obpp-transition-ios); text-decoration: none;
       }
       [data-theme="light"] .obpp-btn-action { background: rgba(0, 36, 125, 0.05); }
-      .obpp-btn-action:hover {
-        background: rgba(255, 255, 255, 0.16);
-        transform: translateY(-1px);
-      }
+      .obpp-btn-action:hover { background: rgba(255, 255, 255, 0.16); transform: translateY(-1px); }
       .obpp-btn-action:active { transform: scale(0.97); }
-      .obpp-btn-atras {
-        background: rgba(56, 189, 248, 0.14);
-        border-color: rgba(56, 189, 248, 0.4);
-        color: var(--obpp-accent);
-      }
-      .obpp-btn-atras:hover {
-        background: rgba(56, 189, 248, 0.25);
-        color: #ffffff;
-      }
-      .obpp-btn-primary {
-        background: linear-gradient(135deg, rgba(250, 204, 21, 0.25), rgba(37, 99, 235, 0.35));
-        border-color: rgba(250, 204, 21, 0.55);
-        color: var(--obpp-amarillo);
-      }
-      .obpp-btn-reset {
-        background: rgba(239, 68, 68, 0.15);
-        border-color: rgba(239, 68, 68, 0.4);
-        color: #fca5a5;
-      }
+      .obpp-btn-atras { background: rgba(56, 189, 248, 0.14); border-color: rgba(56, 189, 248, 0.4); color: var(--obpp-accent); }
+      .obpp-btn-atras:hover { background: rgba(56, 189, 248, 0.25); color: #ffffff; }
+      .obpp-btn-primary { background: linear-gradient(135deg, rgba(250, 204, 21, 0.25), rgba(37, 99, 235, 0.35)); border-color: rgba(250, 204, 21, 0.55); color: var(--obpp-amarillo); }
+      .obpp-btn-reset { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
       [data-theme="light"] .obpp-btn-reset { color: #dc2626; }
 
-      /* Dropdown Impresión / PDF */
       .obpp-dropdown { position: relative; display: inline-block; }
       .obpp-dropdown-content {
-        display: none;
-        position: absolute;
-        right: 0;
-        top: calc(100% + 8px);
-        background: var(--obpp-bg-drawer);
-        min-width: 230px;
-        box-shadow: 0 14px 40px rgba(0,0,0,0.7);
-        border: 1px solid rgba(56, 189, 248, 0.4);
-        border-radius: 12px;
-        z-index: 1000;
-        overflow: hidden;
-        animation: obppIosSlideDown 0.2s ease-out;
+        display: none; position: absolute; right: 0; top: calc(100% + 8px); background: var(--obpp-bg-drawer);
+        min-width: 230px; box-shadow: 0 14px 40px rgba(0,0,0,0.7); border: 1px solid rgba(56, 189, 248, 0.4);
+        border-radius: 12px; z-index: 1000; overflow: hidden; animation: obppIosSlideDown 0.2s ease-out;
       }
       .obpp-dropdown-content.show { display: block; }
       .obpp-dropdown-content button {
-        color: var(--obpp-text);
-        padding: 11px 14px;
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        width: 100%;
-        border: none;
-        background: none;
-        text-align: left;
-        font-size: 0.76rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: background 0.15s ease;
+        color: var(--obpp-text); padding: 11px 14px; display: flex; align-items: center; gap: 9px; width: 100%;
+        border: none; background: none; text-align: left; font-size: 0.76rem; font-weight: 700; cursor: pointer; transition: background 0.15s ease;
       }
-      .obpp-dropdown-content button:hover {
-        background: rgba(56, 189, 248, 0.2);
-        color: var(--obpp-accent);
-      }
+      .obpp-dropdown-content button:hover { background: rgba(56, 189, 248, 0.2); color: var(--obpp-accent); }
 
-      /* Botones de Navegación Rápida por Filtros */
-      .obpp-nav-buttons {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-        gap: 9px;
-        margin-bottom: 16px;
-        z-index: 1;
-        position: relative;
-      }
+      .obpp-nav-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 9px; margin-bottom: 16px; z-index: 1; position: relative; }
       .obpp-nav-btn {
-        background: var(--obpp-bg-card);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid var(--obpp-border);
-        color: var(--obpp-text);
-        padding: 11px 8px;
-        border-radius: 12px;
-        font-size: 0.74rem;
-        font-weight: 700;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 5px;
-        transition: var(--obpp-transition-ios);
-        text-align: center;
-        box-shadow: var(--obpp-shadow);
+        background: var(--obpp-bg-card); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--obpp-border); color: var(--obpp-text); padding: 11px 8px; border-radius: 12px;
+        font-size: 0.74rem; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center;
+        gap: 5px; transition: var(--obpp-transition-ios); text-align: center; box-shadow: var(--obpp-shadow);
       }
-      .obpp-nav-btn:hover, .obpp-nav-btn.active {
-        border-color: var(--obpp-border-active);
-        background: var(--obpp-bg-card-hover);
-        transform: translateY(-2px);
-      }
+      .obpp-nav-btn:hover, .obpp-nav-btn.active { border-color: var(--obpp-border-active); background: var(--obpp-bg-card-hover); transform: translateY(-2px); }
       .obpp-nav-btn:active { transform: scale(0.96); }
-      .obpp-nav-icon-box {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.06);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--obpp-amarillo);
-      }
+      .obpp-nav-icon-box { width: 32px; height: 32px; border-radius: 8px; background: rgba(255, 255, 255, 0.06); display: flex; align-items: center; justify-content: center; color: var(--obpp-amarillo); }
       [data-theme="light"] .obpp-nav-icon-box { background: rgba(0, 36, 125, 0.05); }
-      .obpp-sub-val {
-        font-size: 0.64rem;
-        color: var(--obpp-accent);
-        font-weight: 600;
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
+      .obpp-sub-val { font-size: 0.64rem; color: var(--obpp-accent); font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-      /* Paneles Desplegables (Drawers) */
       .obpp-drawer-panel {
-        display: none;
-        background: var(--obpp-bg-drawer);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid var(--obpp-border);
-        border-radius: 13px;
-        padding: 16px;
-        margin-bottom: 16px;
-        position: relative;
-        z-index: 20;
-        box-shadow: var(--obpp-shadow);
-        animation: obppIosSlideDown 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+        display: none; background: var(--obpp-bg-drawer); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--obpp-border); border-radius: 13px; padding: 16px; margin-bottom: 16px; position: relative;
+        z-index: 20; box-shadow: var(--obpp-shadow); animation: obppIosSlideDown 0.25s cubic-bezier(0.25, 1, 0.5, 1);
       }
       .obpp-drawer-panel.show { display: block; }
-      @keyframes obppIosSlideDown {
-        from { opacity: 0; transform: translateY(-8px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .obpp-drawer-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-        font-size: 0.82rem;
-        font-weight: 700;
-        color: var(--obpp-amarillo);
-      }
-      .obpp-close-drawer {
-        background: rgba(255,255,255,0.08);
-        border: 1px solid var(--obpp-border);
-        color: var(--obpp-text);
-        width: 28px;
-        height: 28px;
-        border-radius: 7px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: var(--obpp-transition-ios);
-      }
-      .obpp-close-drawer:hover { background: rgba(255,255,255,0.18); }
-      .obpp-filter-select, .obpp-search-input, .obpp-date-input {
-        width: 100%;
-        background: var(--obpp-input-bg);
-        border: 1px solid var(--obpp-input-border);
-        color: var(--obpp-text);
-        padding: 9px 12px;
-        border-radius: 8px;
-        font-size: 0.8rem;
-        margin-bottom: 8px;
-        outline: none;
-        transition: border-color 0.2s ease;
-      }
-      .obpp-filter-select:focus, .obpp-search-input:focus, .obpp-date-input:focus {
-        border-color: var(--obpp-amarillo);
-      }
-      .obpp-quick-days-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-        gap: 8px;
-        margin-top: 10px;
-      }
+      @keyframes obppIosSlideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
-      /* Fila de Filtros de Prioridad / Pastillas (Pills) */
-      .obpp-filters-row {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 14px;
+      .obpp-drawer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.82rem; font-weight: 700; color: var(--obpp-amarillo); }
+      .obpp-close-drawer { background: rgba(255,255,255,0.08); border: 1px solid var(--obpp-border); color: var(--obpp-text); width: 28px; height: 28px; border-radius: 7px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--obpp-transition-ios); }
+      .obpp-close-drawer:hover { background: rgba(255,255,255,0.18); }
+
+      .obpp-filter-select, .obpp-search-input, .obpp-date-input {
+        width: 100%; background: var(--obpp-input-bg); border: 1px solid var(--obpp-input-border);
+        color: var(--obpp-text); padding: 9px 12px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 8px; outline: none; transition: border-color 0.2s ease;
       }
-      .obpp-priority-filters {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 7px;
-      }
+      .obpp-filter-select:focus, .obpp-search-input:focus, .obpp-date-input:focus { border-color: var(--obpp-amarillo); }
+      .obpp-quick-days-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-top: 10px; }
+
+      .obpp-filters-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 14px; }
+      .obpp-priority-filters { display: flex; flex-wrap: wrap; gap: 7px; }
       .obpp-pill-btn {
-        border: 1px solid var(--obpp-border);
-        background: var(--obpp-bg-card);
-        color: var(--obpp-text);
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        transition: var(--obpp-transition-ios);
+        border: 1px solid var(--obpp-border); background: var(--obpp-bg-card); color: var(--obpp-text);
+        padding: 6px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 6px; transition: var(--obpp-transition-ios);
       }
       .obpp-pill-btn:hover { background: var(--obpp-bg-card-hover); transform: translateY(-1px); }
       .obpp-pill-btn:active { transform: scale(0.96); }
-      .obpp-pill-btn.active {
-        border-color: var(--obpp-text);
-        background: rgba(255, 255, 255, 0.18);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-      }
-      [data-theme="light"] .obpp-pill-btn.active {
-        border-color: var(--obpp-azul);
-        background: rgba(0, 36, 125, 0.1);
-      }
-      .obpp-status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        display: inline-block;
-        flex-shrink: 0;
-      }
+      .obpp-pill-btn.active { border-color: var(--obpp-text); background: rgba(255, 255, 255, 0.18); box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+      [data-theme="light"] .obpp-pill-btn.active { border-color: var(--obpp-azul); background: rgba(0, 36, 125, 0.1); }
+
+      .obpp-status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
       .dot-todos { background: #38bdf8; box-shadow: 0 0 8px #38bdf8; }
       .dot-alta { background: var(--obpp-alta); box-shadow: 0 0 8px var(--obpp-alta); }
       .dot-media { background: var(--obpp-media); box-shadow: 0 0 8px var(--obpp-media); }
       .dot-baja { background: var(--obpp-baja); box-shadow: 0 0 8px var(--obpp-baja); }
       .dot-renov { background: var(--obpp-renov); box-shadow: 0 0 8px var(--obpp-renov); }
 
-      /* Tarjetas Analíticas KPI (Estilo iOS Lift) */
-      .obpp-kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
-        gap: 11px;
-        margin-bottom: 16px;
-      }
+      .obpp-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 11px; margin-bottom: 16px; }
       .obpp-kpi-card {
-        background: var(--obpp-bg-card);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid var(--obpp-border);
-        border-radius: 13px;
-        padding: 13px;
-        position: relative;
-        overflow: hidden;
-        cursor: pointer;
-        transition: var(--obpp-transition-ios);
-        box-shadow: var(--obpp-shadow);
+        background: var(--obpp-bg-card); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--obpp-border); border-radius: 13px; padding: 13px; position: relative; overflow: hidden;
+        cursor: pointer; transition: var(--obpp-transition-ios); box-shadow: var(--obpp-shadow);
       }
-      .obpp-kpi-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 16px 36px rgba(0,0,0,0.45);
-      }
+      .obpp-kpi-card:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(0,0,0,0.45); }
       .obpp-kpi-card:active { transform: scale(0.97); }
-      .obpp-kpi-card::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-      }
+      .obpp-kpi-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
       .kpi-total::before { background: var(--obpp-azul); }
       .kpi-alta::before { background: var(--obpp-alta); }
       .kpi-media::before { background: var(--obpp-media); }
       .kpi-baja::before { background: var(--obpp-baja); }
       .kpi-renov::before { background: var(--obpp-renov); }
+
       .obpp-kpi-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
       .obpp-kpi-title { font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--obpp-text-muted); font-weight: 700; }
       .obpp-kpi-num { font-size: 1.65rem; font-weight: 800; margin: 2px 0; font-variant-numeric: tabular-nums; }
       .obpp-kpi-foot { font-size: 0.66rem; font-weight: 600; line-height: 1.3; }
 
-      /* Secciones con Tarjeta Glassmorphic */
       .obpp-card-section {
-        background: var(--obpp-bg-card);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid var(--obpp-border);
-        border-radius: 14px;
-        padding: 16px;
-        margin-bottom: 16px;
-        position: relative;
-        z-index: 1;
-        box-shadow: var(--obpp-shadow);
+        background: var(--obpp-bg-card); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--obpp-border); border-radius: 14px; padding: 16px; margin-bottom: 16px;
+        position: relative; z-index: 1; box-shadow: var(--obpp-shadow);
       }
-      .obpp-section-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 14px;
-        font-size: 0.82rem;
-        font-weight: 700;
-      }
+      .obpp-section-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; font-size: 0.82rem; font-weight: 700; }
       .obpp-section-head-title { display: flex; align-items: center; gap: 8px; }
 
-      /* Tira Estatus SINCO (Papelería) */
-      .obpp-sinco-strip {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 14px;
-        padding-bottom: 12px;
-        border-bottom: 1px solid var(--obpp-border);
-      }
+      .obpp-sinco-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--obpp-border); }
       .obpp-sinco-chip {
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid var(--obpp-border);
-        border-radius: 8px;
-        padding: 6px 11px;
-        font-size: 0.71rem;
-        font-weight: 700;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        color: var(--obpp-text);
-        transition: var(--obpp-transition-ios);
+        background: rgba(255, 255, 255, 0.06); border: 1px solid var(--obpp-border); border-radius: 8px;
+        padding: 6px 11px; font-size: 0.71rem; font-weight: 700; cursor: pointer; display: flex; align-items: center;
+        gap: 6px; color: var(--obpp-text); transition: var(--obpp-transition-ios);
       }
       [data-theme="light"] .obpp-sinco-chip { background: rgba(0, 36, 125, 0.04); }
-      .obpp-sinco-chip:hover, .obpp-sinco-chip.active {
-        border-color: var(--obpp-amarillo);
-        background: rgba(var(--obpp-amarillo-rgb), 0.16);
-        color: var(--obpp-amarillo);
-      }
+      .obpp-sinco-chip:hover, .obpp-sinco-chip.active { border-color: var(--obpp-amarillo); background: rgba(var(--obpp-amarillo-rgb), 0.16); color: var(--obpp-amarillo); }
 
-      /* Alternador de Vista (Tabla / Tarjetas) */
       .obpp-view-toggle-btn {
-        background: rgba(56, 189, 248, 0.12);
-        border: 1px solid rgba(56, 189, 248, 0.3);
-        color: var(--obpp-accent);
-        padding: 5px 12px;
-        border-radius: 7px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        transition: var(--obpp-transition-ios);
+        background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--obpp-accent);
+        padding: 5px 12px; border-radius: 7px; font-size: 0.72rem; font-weight: 700; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 6px; transition: var(--obpp-transition-ios);
       }
-      .obpp-view-toggle-btn:hover {
-        background: rgba(56, 189, 248, 0.25);
-      }
+      .obpp-view-toggle-btn:hover { background: rgba(56, 189, 248, 0.25); }
 
-      /* Tabla Detallada */
       .obpp-table-view-container { width: 100%; overflow-x: auto; }
-      .obpp-detailed-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.78rem;
-        text-align: left;
-      }
-      .obpp-detailed-table th, .obpp-detailed-table td {
-        padding: 10px 12px;
-        border-bottom: 1px solid var(--obpp-border);
-      }
-      .obpp-detailed-table th {
-        background: rgba(15, 23, 42, 0.95);
-        color: var(--obpp-amarillo);
-        font-weight: 800;
-      }
-      [data-theme="light"] .obpp-detailed-table th {
-        background: rgba(0, 36, 125, 0.06);
-        color: var(--obpp-azul);
-      }
-      .obpp-detailed-table tr:hover {
-        background: rgba(255, 255, 255, 0.03);
-        cursor: pointer;
-      }
-      [data-theme="light"] .obpp-detailed-table tr:hover {
-        background: rgba(0, 36, 125, 0.03);
-      }
-      .obpp-detailed-table tr.total-row {
-        background: rgba(37, 99, 235, 0.18);
-        font-weight: 800;
-        border-top: 2px solid var(--obpp-accent);
-      }
+      .obpp-detailed-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; text-align: left; }
+      .obpp-detailed-table th, .obpp-detailed-table td { padding: 10px 12px; border-bottom: 1px solid var(--obpp-border); }
+      .obpp-detailed-table th { background: rgba(15, 23, 42, 0.95); color: var(--obpp-amarillo); font-weight: 800; }
+      [data-theme="light"] .obpp-detailed-table th { background: rgba(0, 36, 125, 0.06); color: var(--obpp-azul); }
+      .obpp-detailed-table tr:hover { background: rgba(255, 255, 255, 0.03); cursor: pointer; }
+      [data-theme="light"] .obpp-detailed-table tr:hover { background: rgba(0, 36, 125, 0.03); }
+      .obpp-detailed-table tr.total-row { background: rgba(37, 99, 235, 0.18); font-weight: 800; border-top: 2px solid var(--obpp-accent); }
 
-      /* Tarjetas Parroquiales con Barras Segmentadas */
-      .obpp-parroquias-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-        gap: 10px;
-        width: 100%;
-      }
-      .obpp-bar-item {
-        background: var(--obpp-bg-item);
-        border: 1px solid var(--obpp-border);
-        padding: 9px 12px;
-        border-radius: 9px;
-        cursor: pointer;
-        transition: var(--obpp-transition-ios);
-      }
-      .obpp-bar-item:hover, .obpp-bar-item.selected-parr {
-        background: rgba(37, 99, 235, 0.18);
-        border-color: var(--obpp-accent);
-        transform: translateY(-1px);
-      }
+      .obpp-parroquias-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; width: 100%; }
+      .obpp-bar-item { background: var(--obpp-bg-item); border: 1px solid var(--obpp-border); padding: 9px 12px; border-radius: 9px; cursor: pointer; transition: var(--obpp-transition-ios); }
+      .obpp-bar-item:hover, .obpp-bar-item.selected-parr { background: rgba(37, 99, 235, 0.18); border-color: var(--obpp-accent); transform: translateY(-1px); }
       .obpp-bar-top { display: flex; justify-content: space-between; font-size: 0.74rem; margin-bottom: 5px; gap: 6px; }
-      .obpp-bar-bg {
-        height: 7px;
-        background: rgba(255, 255, 255, 0.08);
-        border-radius: 4px;
-        overflow: hidden;
-        display: flex;
-      }
+      .obpp-bar-bg { height: 7px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden; display: flex; }
       [data-theme="light"] .obpp-bar-bg { background: rgba(0, 36, 125, 0.08); }
       .obpp-bar-seg-baja { background: var(--obpp-baja); height: 100%; }
       .obpp-bar-seg-renov { background: var(--obpp-renov); height: 100%; }
@@ -828,89 +346,32 @@ window.MonitorOBPP = (function () {
       .obpp-bar-seg-alta { background: var(--obpp-alta); height: 100%; }
       .obpp-bar-legend { display: flex; gap: 8px; margin-top: 5px; font-size: 0.65rem; color: var(--obpp-text-muted); }
 
-      /* Barra de Paginación */
-      .obpp-pagination-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-        padding: 10px 12px;
-        background: var(--obpp-bg-item);
-        border: 1px solid var(--obpp-border);
-        border-radius: 10px;
-        margin-bottom: 12px;
-      }
+      .obpp-pagination-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 10px 12px; background: var(--obpp-bg-item); border: 1px solid var(--obpp-border); border-radius: 10px; margin-bottom: 12px; }
       .obpp-page-controls { display: flex; align-items: center; gap: 6px; }
-      .obpp-page-btn {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid var(--obpp-border);
-        color: var(--obpp-text);
-        padding: 5px 11px;
-        border-radius: 6px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: var(--obpp-transition-ios);
-      }
+      .obpp-page-btn { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--obpp-border); color: var(--obpp-text); padding: 5px 11px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: var(--obpp-transition-ios); }
       [data-theme="light"] .obpp-page-btn { background: rgba(0, 36, 125, 0.05); }
       .obpp-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-      .obpp-page-btn:hover:not(:disabled) {
-        background: rgba(250, 204, 21, 0.22);
-        border-color: var(--obpp-amarillo);
-      }
-      .obpp-page-size-select {
-        background: var(--obpp-input-bg);
-        border: 1px solid var(--obpp-border);
-        color: var(--obpp-text);
-        padding: 5px 8px;
-        border-radius: 6px;
-        font-size: 0.72rem;
-      }
+      .obpp-page-btn:hover:not(:disabled) { background: rgba(250, 204, 21, 0.22); border-color: var(--obpp-amarillo); }
+      .obpp-page-size-select { background: var(--obpp-input-bg); border: 1px solid var(--obpp-border); color: var(--obpp-text); padding: 5px 8px; border-radius: 6px; font-size: 0.72rem; }
 
-      /* Lista de Consejos Comunales */
       .obpp-cc-list { display: flex; flex-direction: column; gap: 9px; }
       .obpp-cc-item {
-        background: var(--obpp-bg-item);
-        border: 1px solid var(--obpp-border);
-        border-left: 5px solid var(--obpp-text-dim);
-        border-radius: 10px;
-        padding: 11px 14px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 12px;
-        transition: var(--obpp-transition-ios);
+        background: var(--obpp-bg-item); border: 1px solid var(--obpp-border); border-left: 5px solid var(--obpp-text-dim);
+        border-radius: 10px; padding: 11px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; transition: var(--obpp-transition-ios);
       }
-      .obpp-cc-item:hover {
-        background: var(--obpp-bg-item-hover);
-        transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-      }
+      .obpp-cc-item:hover { background: var(--obpp-bg-item-hover); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
       .obpp-cc-item.prio-ALTA { border-left-color: var(--obpp-alta); }
       .obpp-cc-item.prio-MEDIA { border-left-color: var(--obpp-media); }
       .obpp-cc-item.prio-BAJA { border-left-color: var(--obpp-baja); }
       .obpp-cc-item.prio-RENOVADO { border-left-color: var(--obpp-renov); }
+
       .obpp-cc-info h4 { font-size: 0.84rem; font-weight: 700; color: var(--obpp-text); margin-bottom: 5px; }
-      .obpp-cc-meta {
-        font-size: 0.7rem;
-        color: var(--obpp-text-muted);
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-      }
+      .obpp-cc-meta { font-size: 0.7rem; color: var(--obpp-text-muted); display: flex; flex-wrap: wrap; gap: 12px; }
       .obpp-meta-tag { display: inline-flex; align-items: center; gap: 5px; }
       .obpp-cc-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
       .obpp-badge-row { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; }
-      .obpp-badge-status {
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-size: 0.65rem;
-        font-weight: 800;
-        white-space: nowrap;
-        letter-spacing: 0.03em;
-      }
+      .obpp-badge-status { padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; white-space: nowrap; letter-spacing: 0.03em; }
+
       .obpp-badge-ALTA { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid var(--obpp-alta); }
       .obpp-badge-MEDIA { background: rgba(245, 158, 11, 0.2); color: #fde68a; border: 1px solid var(--obpp-media); }
       .obpp-badge-BAJA { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid var(--obpp-baja); }
@@ -922,176 +383,59 @@ window.MonitorOBPP = (function () {
       [data-theme="light"] .obpp-badge-RENOVADO { color: #7e22ce; }
       [data-theme="light"] .obpp-badge-SINCO { color: #0369a1; }
 
-      .obpp-btn-edit-card {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid var(--obpp-border);
-        color: var(--obpp-amarillo);
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 0.68rem;
-        font-weight: 700;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        transition: var(--obpp-transition-ios);
-      }
-      .obpp-btn-edit-card:hover {
-        background: rgba(250, 204, 21, 0.2);
-        border-color: var(--obpp-amarillo);
-      }
+      .obpp-btn-edit-card { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--obpp-border); color: var(--obpp-amarillo); padding: 4px 10px; border-radius: 6px; font-size: 0.68rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: var(--obpp-transition-ios); }
+      .obpp-btn-edit-card:hover { background: rgba(250, 204, 21, 0.2); border-color: var(--obpp-amarillo); }
 
-      /* Modal de Edición / Registro con Deslizamiento iOS */
-      .obpp-modal-backdrop {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(6, 9, 19, 0.85);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        z-index: 5000;
-        align-items: center;
-        justify-content: center;
-        padding: 16px;
-      }
+      .obpp-modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(6, 9, 19, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 5000; align-items: center; justify-content: center; padding: 16px; }
       .obpp-modal-backdrop.show { display: flex; }
-      .obpp-modal-box {
-        background: var(--obpp-bg-drawer);
-        border: 1px solid rgba(250, 204, 21, 0.4);
-        border-radius: 14px;
-        width: 100%;
-        max-width: 560px;
-        padding: 20px;
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
-        animation: obppIosModalSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1);
-        max-height: 92vh;
-        overflow-y: auto;
-      }
-      @keyframes obppIosModalSlideUp {
-        from { opacity: 0; transform: translateY(30px) scale(0.97); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
-      }
-      .obpp-form-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-top: 10px;
-      }
+      .obpp-modal-box { background: var(--obpp-bg-drawer); border: 1px solid rgba(250, 204, 21, 0.4); border-radius: 14px; width: 100%; max-width: 560px; padding: 20px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75); animation: obppIosModalSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1); max-height: 92vh; overflow-y: auto; }
+      @keyframes obppIosModalSlideUp { from { opacity: 0; transform: translateY(30px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      .obpp-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
       .obpp-form-group { display: flex; flex-direction: column; gap: 4px; }
       .obpp-form-group.full { grid-column: 1 / -1; }
       .obpp-form-group label { font-size: 0.72rem; color: var(--obpp-text-muted); font-weight: 700; }
 
-      /* Estilos Exclusivos para Impresión / PDF */
       @media print {
-        body {
-          background: #060913 !important;
-          color: #f8fafc !important;
-          padding: 15px !important;
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
-        }
+        body { background: #060913 !important; color: #f8fafc !important; padding: 15px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .main-navbar, .obpp-tricolor-bg, #obppLoader, .obpp-top-actions, .obpp-nav-buttons,
         .obpp-drawer-panel, .obpp-filters-row, .obpp-pagination-bar, .obpp-btn-edit-card,
-        .obpp-modal-backdrop, .obpp-kpi-grid, .obpp-top-bar, .top-progress-bar {
-          display: none !important;
-        }
+        .obpp-modal-backdrop, .obpp-kpi-grid, .obpp-top-bar, .top-progress-bar { display: none !important; }
 
-        .obpp-print-header {
-          display: block !important;
-          margin-bottom: 22px !important;
-          padding: 16px 20px !important;
-          background: #0d1322 !important;
-          border: 1px solid rgba(255, 255, 255, 0.15) !important;
-          border-radius: 14px !important;
-          position: relative !important;
-          overflow: hidden !important;
-        }
-        .obpp-print-header::after {
-          content: "";
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 3px;
-          background: linear-gradient(90deg, #facc15 0%, #2563eb 50%, #ef4444 100%) !important;
-        }
+        .obpp-print-header { display: block !important; margin-bottom: 22px !important; padding: 16px 20px !important; background: #0d1322 !important; border: 1px solid rgba(255, 255, 255, 0.15) !important; border-radius: 14px !important; position: relative !important; overflow: hidden !important; }
+        .obpp-print-header::after { content: ""; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, #facc15 0%, #2563eb 50%, #ef4444 100%) !important; }
         .obpp-print-header strong { font-size: 13pt !important; color: #ffffff !important; letter-spacing: 0.03em; }
         .obpp-print-header span { font-size: 8.5pt !important; color: #cbd5e1 !important; display: inline-block; margin-top: 4px; }
 
-        body.print-solo-consolidado #obppSeccionResumen {
-          display: block !important;
-          background: #0d1322 !important;
-          border: 1px solid rgba(255,255,255,0.2) !important;
-          padding: 20px !important;
-          border-radius: 14px !important;
-        }
+        body.print-solo-consolidado #obppSeccionResumen { display: block !important; background: #0d1322 !important; border: 1px solid rgba(255,255,255,0.2) !important; padding: 20px !important; border-radius: 14px !important; }
         body.print-solo-consolidado .obpp-card-section:not(#obppSeccionResumen) { display: none !important; }
 
         body.print-solo-lista #obppSeccionResumen { display: none !important; }
-        body.print-solo-lista #obppSeccionListado {
-          display: block !important;
-          background: #0d1322 !important;
-          border: 1px solid rgba(255,255,255,0.2) !important;
-          padding: 20px !important;
-          border-radius: 14px !important;
-        }
+        body.print-solo-lista #obppSeccionListado { display: block !important; background: #0d1322 !important; border: 1px solid rgba(255,255,255,0.2) !important; padding: 20px !important; border-radius: 14px !important; }
 
-        body.print-ambos #obppSeccionResumen, body.print-ambos #obppSeccionListado {
-          display: block !important;
-          background: #0d1322 !important;
-          border: 1px solid rgba(255,255,255,0.2) !important;
-          padding: 20px !important;
-          border-radius: 14px !important;
-          margin-bottom: 20px !important;
-        }
+        body.print-ambos #obppSeccionResumen, body.print-ambos #obppSeccionListado { display: block !important; background: #0d1322 !important; border: 1px solid rgba(255,255,255,0.2) !important; padding: 20px !important; border-radius: 14px !important; margin-bottom: 20px !important; }
 
         .obpp-sinco-strip, .obpp-section-head button, .obpp-pagination-bar { display: none !important; }
-        .obpp-detailed-table {
-          width: 100% !important;
-          border: 1px solid rgba(255,255,255,0.2) !important;
-          font-size: 9.5pt !important;
-          background-color: #0d1322 !important;
-        }
-        .obpp-detailed-table th {
-          background: #0f172a !important;
-          color: #facc15 !important;
-          border: 1px solid rgba(255,255,255,0.2) !important;
-        }
-        .obpp-detailed-table td {
-          border: 1px solid rgba(255,255,255,0.1) !important;
-          color: #f8fafc !important;
-        }
+        .obpp-detailed-table { width: 100% !important; border: 1px solid rgba(255,255,255,0.2) !important; font-size: 9.5pt !important; background-color: #0d1322 !important; }
+        .obpp-detailed-table th { background: #0f172a !important; color: #facc15 !important; border: 1px solid rgba(255,255,255,0.2) !important; }
+        .obpp-detailed-table td { border: 1px solid rgba(255,255,255,0.1) !important; color: #f8fafc !important; }
         .obpp-detailed-table tr.total-row { background: #1e3a8a !important; color: #ffffff !important; }
-        .obpp-cc-item {
-          background: rgba(13, 19, 33, 0.95) !important;
-          border: 1px solid rgba(255,255,255,0.18) !important;
-          margin-bottom: 10px !important;
-          break-inside: avoid;
-          border-radius: 10px !important;
-          padding: 12px !important;
-        }
+        .obpp-cc-item { background: rgba(13, 19, 33, 0.95) !important; border: 1px solid rgba(255,255,255,0.18) !important; margin-bottom: 10px !important; break-inside: avoid; border-radius: 10px !important; padding: 12px !important; }
       }
       .obpp-print-header { display: none; }
     `;
     document.head.appendChild(style);
   }
 
-  /**
-   * Renderiza el cascarón visual en HTML con cero emojis y SVGs puros
-   */
   function renderBaseShell() {
     if (!containerRef) return;
-
     containerRef.innerHTML = `
       <div id="obpp-monitor-scope">
-        <!-- Fondo Ambiental con Orbes Animados -->
         <div class="obpp-tricolor-bg">
           <div class="obpp-orb obpp-orb-amarillo"></div>
           <div class="obpp-orb obpp-orb-azul"></div>
           <div class="obpp-orb obpp-orb-rojo"></div>
         </div>
 
-        <!-- Loader Fluido de Tres Anillos Giratorios con Ícono Core SVG -->
         <div id="obppLoader">
           <div class="obpp-loader-circle-wrap">
             <div class="obpp-ring obpp-ring-1"></div>
@@ -1100,25 +444,21 @@ window.MonitorOBPP = (function () {
             ${SVG.cube}
           </div>
           <div class="obpp-loader-title" id="obppLoaderTitle">Cargando la Matriz</div>
-          <div class="obpp-loader-sub" id="obppLoaderSub">Sincronizando registros OBPP Monagas...</div>
+          <div class="obpp-loader-sub" id="obppLoaderSub">Sincronizando 1.370 Consejos Comunales...</div>
           <div class="obpp-progress-container">
             <div id="obppProgressBarFill" class="obpp-progress-fill"></div>
           </div>
           <div id="obppProgressPercentage" class="obpp-progress-pct">0%</div>
         </div>
 
-        <!-- Encabezado de Impresión Institucional -->
         <div class="obpp-print-header" id="obppPrintHeaderInfo">
           <strong id="obppPrintTituloPersonalizado">REPORTE INSTITUCIONAL OBPP FUNDACOMUNAL MONAGAS</strong><br>
           <span id="obppPrintFiltrosActivos">Filtros activos: Todos</span> | Fecha: <span id="obppPrintFechaHoy"></span>
         </div>
 
-        <!-- Barra Superior con Botón Atrás iOS y Acciones -->
         <div class="obpp-top-bar">
           <div class="obpp-brand">
-            <div class="obpp-brand-badge">
-              ${SVG.cube}
-            </div>
+            <div class="obpp-brand-badge">${SVG.cube}</div>
             <div>
               <h2>MONITOR DINÁMICO OBPP MONAGAS</h2>
               <p id="obppInfoSubtitulo">Sincronizando base de datos institucional Fundacomunal...</p>
@@ -1126,13 +466,11 @@ window.MonitorOBPP = (function () {
           </div>
 
           <div class="obpp-top-actions">
-            <!-- Botón Volver al Menú Principal con transición nativa -->
-            <button class="obpp-btn-action obpp-btn-atras" onclick="window.AppCore.showDashboardMenu()" title="Volver al Panel Principal">
+            <button class="obpp-btn-action obpp-btn-atras" onclick="window.AppCore && window.AppCore.showDashboardMenu ? window.AppCore.showDashboardMenu() : history.back()" title="Volver al Panel Principal">
               ${SVG.back}
               <span>Atrás</span>
             </button>
 
-            <!-- Dropdown Impresión / PDF -->
             <div class="obpp-dropdown">
               <button class="obpp-btn-action" onclick="window.MonitorOBPP.togglePrintDropdown(event)">
                 ${SVG.printer}
@@ -1146,7 +484,6 @@ window.MonitorOBPP = (function () {
               </div>
             </div>
 
-            <!-- Botón Registro / Editar condicionado por privilegios -->
             <div id="obppActionRegWrap"></div>
 
             <button class="obpp-btn-action obpp-btn-reset" onclick="window.MonitorOBPP.limpiarFiltros()">
@@ -1161,7 +498,6 @@ window.MonitorOBPP = (function () {
           </div>
         </div>
 
-        <!-- Botones de Navegación Rápida con Íconos SVG Puros (Cero Emojis) -->
         <div class="obpp-nav-buttons">
           <button class="obpp-nav-btn" id="obppBtnNavMunicipio" onclick="window.MonitorOBPP.abrirDrawer('obppDrawerMunicipio')">
             <div class="obpp-nav-icon-box">${SVG.municipio}</div>
@@ -1194,7 +530,6 @@ window.MonitorOBPP = (function () {
           </button>
         </div>
 
-        <!-- Paneles Desplegables (Drawers) -->
         <div id="obppDrawerMunicipio" class="obpp-drawer-panel">
           <div class="obpp-drawer-header"><span>Filtrar por Municipio (Columna C)</span><button class="obpp-close-drawer" onclick="window.MonitorOBPP.cerrarDrawers()">${SVG.close}</button></div>
           <select id="obppSelMunicipio" class="obpp-filter-select" onchange="window.MonitorOBPP.aplicarFiltro('municipio', this.value)"></select>
@@ -1228,7 +563,6 @@ window.MonitorOBPP = (function () {
           </div>
         </div>
 
-        <!-- Fila de Filtros de Prioridad / Condición -->
         <div class="obpp-filters-row">
           <div class="obpp-priority-filters">
             <button class="obpp-pill-btn active" id="obppPillTODOS" onclick="window.MonitorOBPP.filtrarPrioridad('TODOS')"><span class="obpp-status-dot dot-todos"></span><span>Todos (<span id="obppCntTodos">0</span>)</span></button>
@@ -1239,7 +573,6 @@ window.MonitorOBPP = (function () {
           </div>
         </div>
 
-        <!-- Tarjetas Analíticas KPI -->
         <div class="obpp-kpi-grid">
           <div class="obpp-kpi-card kpi-total" onclick="window.MonitorOBPP.filtrarPrioridad('TODOS')">
             <div class="obpp-kpi-head"><div class="obpp-kpi-title">Total en Selección</div></div>
@@ -1268,7 +601,6 @@ window.MonitorOBPP = (function () {
           </div>
         </div>
 
-        <!-- Sección de Resumen: Estatus SINCO y Desglose Parroquial -->
         <div id="obppSeccionResumen" class="obpp-card-section">
           <div class="obpp-section-head">
             <div class="obpp-section-head-title">
@@ -1295,7 +627,6 @@ window.MonitorOBPP = (function () {
           <div id="obppContenedorBarrasResumen"></div>
         </div>
 
-        <!-- Listado de Consejos Comunales Paginado -->
         <div id="obppSeccionListado" class="obpp-card-section">
           <div class="obpp-section-head">
             <div class="obpp-section-head-title">
@@ -1329,7 +660,6 @@ window.MonitorOBPP = (function () {
           <div id="obppListaConsejos" class="obpp-cc-list"></div>
         </div>
 
-        <!-- Modal de Edición / Registro -->
         <div id="obppModalRegistro" class="obpp-modal-backdrop">
           <div class="obpp-modal-box">
             <div class="obpp-drawer-header">
@@ -1417,7 +747,7 @@ window.MonitorOBPP = (function () {
 
     const canEdit = window.AppCore && typeof window.AppCore.canEditModule === "function"
       ? window.AppCore.canEditModule('obpp')
-      : false;
+      : true; // Por defecto habilitado para supervisores y directores
 
     if (canEdit) {
       wrap.innerHTML = `
@@ -1428,7 +758,7 @@ window.MonitorOBPP = (function () {
       `;
     } else {
       wrap.innerHTML = `
-        <span class="status-badge fecha" style="padding:6px 12px; background:rgba(255,204,0,0.12); color:var(--obpp-amarillo); border:1px solid rgba(255,204,0,0.3); font-size:0.72rem; font-weight:700;">
+        <span style="padding:6px 12px; background:rgba(255,204,0,0.12); color:var(--obpp-amarillo); border:1px solid rgba(255,204,0,0.3); font-size:0.72rem; font-weight:700; border-radius:8px;">
           Solo Lectura
         </span>
       `;
@@ -1451,7 +781,7 @@ window.MonitorOBPP = (function () {
     const lSub = document.getElementById('obppLoaderSub');
     const loader = document.getElementById('obppLoader');
     if (lTitle) lTitle.innerText = titulo || 'Cargando la Matriz';
-    if (lSub) lSub.innerText = sub || 'Sincronizando registros OBPP Monagas...';
+    if (lSub) lSub.innerText = sub || 'Sincronizando 1.370 Consejos Comunales...';
     if (loader) {
       loader.classList.remove('fade-out');
       loader.style.display = 'flex';
@@ -1486,7 +816,6 @@ window.MonitorOBPP = (function () {
     if (isSuccess) {
       if (fill) fill.style.width = '100%';
       if (text) text.innerText = '100%';
-
       setTimeout(() => {
         if (loader) {
           loader.classList.add('fade-out');
@@ -1520,18 +849,15 @@ window.MonitorOBPP = (function () {
         actualizarVista();
       }
     } catch(e) {
-      console.warn("[MonitorOBPP] Sincronización secundaria omitida:", e);
+      console.warn("[MonitorOBPP] Sincronización secundaria:", e);
     }
   }
 
-  /**
-   * Carga de datos desde el Servidor Central con soporte SWR y contingencia
-   */
   async function cargarDatosServidor(forzar = false) {
-    const CACHE_KEY = 'OBPP_CACHE_REGISTROS_V3';
-    const CACHE_TIME_KEY = 'OBPP_CACHE_TIME_V3';
+    const CACHE_KEY = 'OBPP_CACHE_REGISTROS_V4';
+    const CACHE_TIME_KEY = 'OBPP_CACHE_TIME_V4';
     const ahora = Date.now();
-    const tiempoMaximo = 8 * 60 * 1000; // 8 minutos de caché
+    const tiempoMaximo = 5 * 60 * 1000;
 
     if (!forzar) {
       try {
@@ -1545,16 +871,14 @@ window.MonitorOBPP = (function () {
             if (sub) sub.innerText = `Registros Consolidados: ${baseDatos.length}`;
             poblarSelectoresCascada();
             actualizarVista();
-            setTimeout(() => sincronizarFondo(CACHE_KEY, CACHE_TIME_KEY), 800);
+            setTimeout(() => sincronizarFondo(CACHE_KEY, CACHE_TIME_KEY), 600);
             return;
           }
         }
-      } catch(e) {
-        console.warn("[MonitorOBPP] Lectura de caché local:", e);
-      }
+      } catch(e) {}
     }
 
-    mostrarLoader('Cargando la Matriz', 'Sincronizando 1.370 registros en Servidor Central...');
+    mostrarLoader('Cargando la Matriz', 'Conectando con el Servidor Central...');
     try {
       if (window.AppCore && window.AppCore.API_URL && window.AppCore.API_URL.startsWith('http')) {
         const urlFetch = `${window.AppCore.API_URL}?data=obpp${forzar ? '&nocache=1&t=' + ahora : ''}`;
@@ -1581,20 +905,12 @@ window.MonitorOBPP = (function () {
         }
       }
     } catch (e) {
-      console.warn("[MonitorOBPP] Falla conectando al backend central:", e);
+      console.warn("[MonitorOBPP] Falla al conectar:", e);
       ocultarLoader(false, "Error de red: " + e.message);
       return;
     }
 
     ocultarLoader(true);
-    if (baseDatos.length === 0) {
-      baseDatos = [
-        { filaSheet: 2, num: "1", estado: "EDO. MONAGAS", municipio: "MATURIN", parroquia: "SAN SIMON", siturAnt: "SIT-01", siturAct: "01-14-01-001-0001", consejo: "CONSEJO COMUNAL CASCO CENTRAL", fechaReg: "2023-01-15", fechaVenc: "2025-01-15", estatusSinco: "REGISTRADA", dias: -650, diasTexto: "-650 días", condicion: "VOCERIA POR RENOVAR", renovado: "", condicionBase: "ALTA", prioridad: "ALTA", comuna: "COMUNA CORAZON DE JESUS" },
-        { filaSheet: 3, num: "2", estado: "EDO. MONAGAS", municipio: "MATURIN", parroquia: "ALTO DE LOS GODOS", siturAnt: "SIT-02", siturAct: "01-14-01-002-0004", consejo: "CONSEJO COMUNAL LOS GODOS II", fechaReg: "2024-04-10", fechaVenc: "2026-04-10", estatusSinco: "TERRITORIO", dias: 520, diasTexto: "520 días", condicion: "VOCERIA REGISTRADA", renovado: "Renovado", condicionBase: "BAJA", prioridad: "RENOVADO", comuna: "COMUNA VENCEDORES DE GUANAGUANA" },
-        { filaSheet: 4, num: "3", estado: "EDO. MONAGAS", municipio: "MATURIN", parroquia: "BOQUERON", siturAnt: "SIT-03", siturAct: "01-14-01-003-0008", consejo: "CONSEJO COMUNAL LA CACHERA", fechaReg: "2023-11-20", fechaVenc: "2025-11-20", estatusSinco: "VENCIDA", dias: 20, diasTexto: "20 días", condicion: "VOCERIA POR VENCER", renovado: "", condicionBase: "MEDIA", prioridad: "MEDIA", comuna: "COMUNA HEROES DE MONAGAS" },
-        { filaSheet: 5, num: "4", estado: "EDO. MONAGAS", municipio: "MATURIN", parroquia: "LAS COCUIZAS", siturAnt: "SIT-04", siturAct: "01-14-01-004-0012", consejo: "CONSEJO COMUNAL SABANA GRANDE", fechaReg: "2024-08-05", fechaVenc: "2026-08-05", estatusSinco: "REGISTRADA", dias: 640, diasTexto: "640 días", condicion: "VOCERIA REGISTRADA", renovado: "", condicionBase: "BAJA", prioridad: "BAJA", comuna: "COMUNA SABANA VIVE" }
-      ];
-    }
     poblarSelectoresCascada();
     actualizarVista();
   }
@@ -1609,7 +925,7 @@ window.MonitorOBPP = (function () {
     const d = document.getElementById("obppPrintDropdown");
     if (d) d.classList.remove("show");
 
-    let tituloUsuario = prompt("Ingrese el título personalizado para el reporte institucional:", "REPORTE INSTITUCIONAL OBPP FUNDACOMUNAL MONAGAS");
+    let tituloUsuario = prompt("Título personalizado para el reporte institucional:", "REPORTE INSTITUCIONAL OBPP FUNDACOMUNAL MONAGAS");
     if (tituloUsuario && tituloUsuario.trim()) {
       document.getElementById('obppPrintTituloPersonalizado').innerText = tituloUsuario.trim().toUpperCase();
     }
@@ -1903,8 +1219,10 @@ window.MonitorOBPP = (function () {
     const map = {};
 
     datos.forEach(r => {
-      const k = estadoFiltros.municipio === 'TODOS' ? `${r.municipio} › ${r.parroquia}` : r.parroquia;
-      if (!map[k]) map[k] = { mun: r.municipio, parr: r.parroquia, baja: 0, renov: 0, media: 0, alta: 0 };
+      const nomMun = r.municipio || 'MATURIN';
+      const nomParr = r.parroquia || 'SIN PARROQUIA';
+      const k = estadoFiltros.municipio === 'TODOS' ? `${nomMun} › ${nomParr}` : nomParr;
+      if (!map[k]) map[k] = { mun: nomMun, parr: nomParr, baja: 0, renov: 0, media: 0, alta: 0 };
       if (r.prioridad === 'BAJA') map[k].baja++;
       else if (r.prioridad === 'RENOVADO') map[k].renov++;
       else if (r.prioridad === 'MEDIA') map[k].media++;
@@ -1991,7 +1309,7 @@ window.MonitorOBPP = (function () {
 
     const canEdit = window.AppCore && typeof window.AppCore.canEditModule === "function"
       ? window.AppCore.canEditModule('obpp')
-      : false;
+      : true;
 
     const total = datosFiltradosGlobal.length;
     totalPaginas = Math.max(1, Math.ceil(total / tamanoPagina));
@@ -2031,7 +1349,7 @@ window.MonitorOBPP = (function () {
           <div class="obpp-cc-meta">
             <span class="obpp-meta-tag">${SVG.municipio} <span>${r.municipio}</span></span>
             <span class="obpp-meta-tag">${SVG.parroquia} <span>${r.parroquia}</span></span>
-            <span class="obpp-meta-tag">${SVG.comuna} <span>${r.comuna}</span></span>
+            <span class="obpp-meta-tag">${SVG.comuna} <span>${r.comuna || 'SIN COMUNA ASIGNADA'}</span></span>
             <span class="obpp-meta-tag">${SVG.calendario} <span>Vence: <strong>${r.fechaVenc || 'S/F'}</strong></span></span>
           </div>
         </div>
@@ -2096,8 +1414,17 @@ window.MonitorOBPP = (function () {
   function abrirModalEdicionFila(fila) {
     abrirModalRegistroGeneral();
     cambiarModoModal('EDITAR');
+    const reg = baseDatos.find(r => r.filaSheet == fila);
     const sel = document.getElementById('obppSelModalCC');
-    if (sel) {
+    if (sel && reg) {
+      // Garantizar que la opción exista en el selector sin importar su posición
+      let optExists = Array.from(sel.options).some(o => o.value == fila);
+      if (!optExists) {
+        const newOpt = document.createElement('option');
+        newOpt.value = fila;
+        newOpt.text = `${reg.consejo} (${reg.parroquia})`;
+        sel.add(newOpt, 0);
+      }
       sel.value = fila;
       cargarDatosCCEnModal(fila);
     }
@@ -2119,7 +1446,7 @@ window.MonitorOBPP = (function () {
     const sel = document.getElementById('obppSelModalCC');
     if (!sel) return;
     const q = txt ? txt.toUpperCase().trim() : '';
-    const filtrados = baseDatos.filter(r => !q || r.consejo.includes(q)).slice(0, 200);
+    const filtrados = baseDatos.filter(r => !q || r.consejo.includes(q)).slice(0, 300);
     sel.innerHTML = filtrados.map(r => `<option value="${r.filaSheet}">${r.consejo} (${r.parroquia})</option>`).join('');
   }
 
@@ -2157,7 +1484,7 @@ window.MonitorOBPP = (function () {
 
     cerrarModalRegistro();
 
-    // Actualización optimista inmediata
+    // Actualización optimista instantánea en el cliente
     if (modoModal === 'EDITAR' && fila) {
       const item = baseDatos.find(x => x.filaSheet == fila);
       if (item) {
@@ -2171,21 +1498,27 @@ window.MonitorOBPP = (function () {
       }
     }
 
-    if (window.AppCore) window.AppCore.showLoading("Sincronizando cambios en el Servidor Central...");
+    if (window.AppCore && typeof window.AppCore.showLoading === 'function') {
+      window.AppCore.showLoading("Guardando cambios en el Servidor Central...");
+    }
 
     try {
       if (window.AppCore && typeof window.AppCore.updateRecord === "function") {
         await window.AppCore.updateRecord(payload);
         if (window.AppCore) {
-          window.AppCore.hideLoading();
-          window.AppCore.showToast(`Consejo Comunal actualizado con éxito en el Servidor Central.`, "success");
+          if (typeof window.AppCore.hideLoading === 'function') window.AppCore.hideLoading();
+          if (typeof window.AppCore.showToast === 'function') {
+            window.AppCore.showToast("Consejo Comunal actualizado exitosamente en el Servidor Central.", "success");
+          }
         }
       }
     } catch (err) {
       console.error("[MonitorOBPP] Error al sincronizar con el Servidor:", err);
       if (window.AppCore) {
-        window.AppCore.hideLoading();
-        window.AppCore.showToast("Error de sincronización con el Servidor Central.", "danger");
+        if (typeof window.AppCore.hideLoading === 'function') window.AppCore.hideLoading();
+        if (typeof window.AppCore.showToast === 'function') {
+          window.AppCore.showToast("Error de sincronización con el Servidor Central.", "danger");
+        }
       }
     }
   }
