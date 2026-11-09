@@ -81,16 +81,17 @@ window.MonitorRRHH = (function () {
 
     containerRef.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:14px;">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <button class="icon-btn" onclick="window.AppCore.showDashboardMenu()" title="Volver al Menú Central" style="width:38px; height:38px;">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <button class="btn-back-ios" onclick="window.AppCore.showDashboardMenu()">
             <svg viewBox="0 0 24 24"><path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z"/></svg>
+            <span>Volver</span>
           </button>
           <div>
             <span style="font-size:0.75rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:var(--color-blue);">
-              SISTEMA DE TALENTO HUMANO &bull; DATOS_RRHH
+              DIRECCIÓN DE COMUNAS Y MOVIMIENTOS SOCIALES &bull; MATURÍN
             </span>
             <h2 style="font-size:1.6rem; font-weight:900; margin:2px 0 0; letter-spacing:-0.4px;">
-              Estadísticas de Personal & Asistencia
+              Estadísticas de Personal y Movimientos
             </h2>
           </div>
         </div>
