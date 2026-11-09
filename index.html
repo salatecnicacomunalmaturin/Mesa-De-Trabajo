@@ -1226,11 +1226,31 @@
         applyTheme(state.theme);
         updateLogoDisplay();
 
+        // Carga pública inmediata de la configuración institucional (Logo activo para todos los visitantes)
+        sincronizarConfiguracionPublica();
+
         if (state.currentUser && state.currentUser.estado === "ACTIVO") {
           updateUserNavDisplay();
           showDashboardMenu();
         } else {
           showAuthView();
+        }
+      }
+
+      async function sincronizarConfiguracionPublica() {
+        try {
+          if (!state.apiUrl || !state.apiUrl.startsWith('http')) return;
+          const resp = await fetch(state.apiUrl + (state.apiUrl.includes('?') ? '&' : '?') + 'data=config');
+          const json = await resp.json();
+          if (json && (json.status === 'ok' || json.ok)) {
+            if (json.active_logo_url && json.active_logo_url.startsWith('http')) {
+              state.activeLogoUrl = json.active_logo_url;
+              localStorage.setItem('inst_active_logo', json.active_logo_url);
+              updateLogoDisplay();
+            }
+          }
+        } catch (e) {
+          console.warn("[AppCore] Falla sincronizando configuración pública:", e);
         }
       }
 
@@ -1292,13 +1312,33 @@
       function updateLogoDisplay() {
         const img = document.getElementById('navbarLogoImg');
         const def = document.getElementById('defaultLogoSvg');
+        const authImg = document.getElementById('authLogoImg');
+        const authDef = document.getElementById('authLogoSvg');
+
         if (state.activeLogoUrl && state.activeLogoUrl.startsWith('http')) {
-          img.src = state.activeLogoUrl;
-          img.style.display = 'block';
-          def.style.display = 'none';
+          if (img) {
+            img.src = state.activeLogoUrl;
+            img.style.display = 'block';
+          }
+          if (def) def.style.display = 'none';
+
+          if (authImg) {
+            authImg.src = state.activeLogoUrl;
+            authImg.style.display = 'block';
+          }
+          if (authDef) authDef.style.display = 'none';
         } else {
-          img.style.display = 'none';
-          def.style.display = 'block';
+          if (img) {
+            img.src = '';
+            img.style.display = 'none';
+          }
+          if (def) def.style.display = 'block';
+
+          if (authImg) {
+            authImg.src = '';
+            authImg.style.display = 'none';
+          }
+          if (authDef) authDef.style.display = 'block';
         }
       }
 
@@ -1402,15 +1442,14 @@
           <div style="display:flex; justify-content:center; align-items:center; min-height:calc(100vh - 140px); padding:20px 10px;">
             <div class="glass-card" style="width:100%; max-width:460px; padding:36px 30px;">
               <div style="text-align:center; margin-bottom:26px;">
-                <div class="logo-institution-wrap" style="width:68px; height:68px; margin:0 auto 14px;">
-                  ${state.activeLogoUrl ? `<img src="${state.activeLogoUrl}" alt="Logo">` : `
-                    <svg viewBox="0 0 100 100" fill="none">
-                      <circle cx="50" cy="50" r="44" stroke="#FFCC00" stroke-width="3" stroke-dasharray="6 3" />
-                      <circle cx="50" cy="50" r="34" fill="#00247D" />
-                      <path d="M50 22 L62 46 L38 46 Z" fill="#FFCC00" />
-                      <circle cx="50" cy="58" r="10" fill="#CF142B" />
-                    </svg>
-                  `}
+                <div class="logo-institution-wrap" id="authLogoContainer" style="width:68px; height:68px; margin:0 auto 14px;">
+                  <img id="authLogoImg" src="${state.activeLogoUrl || ''}" alt="Logo Institucional" style="${state.activeLogoUrl ? '' : 'display:none;'} width:100%; height:100%; object-fit:contain; border-radius:8px; animation:logoPulseFade 3s ease-in-out infinite alternate;">
+                  <svg id="authLogoSvg" viewBox="0 0 100 100" fill="none" style="${state.activeLogoUrl ? 'display:none;' : ''} width:100%; height:100%; animation:logoPulseFade 3s ease-in-out infinite alternate;">
+                    <circle cx="50" cy="50" r="44" stroke="#FFCC00" stroke-width="3" stroke-dasharray="6 3" />
+                    <circle cx="50" cy="50" r="34" fill="#00247D" />
+                    <path d="M50 22 L62 46 L38 46 Z" fill="#FFCC00" />
+                    <circle cx="50" cy="58" r="10" fill="#CF142B" />
+                  </svg>
                 </div>
                 <h1 style="font-size:1.25rem; font-weight:900; margin-bottom:4px; line-height:1.3;">Dirección de Comunas y Movimientos Sociales</h1>
                 <p style="font-size:0.8rem; color:var(--text-muted);">Municipio Maturín &bull; Autenticación Delegada</p>
@@ -2514,10 +2553,13 @@
                   <input type="datetime-local" class="form-input" id="inp_date_${m.id}" value="${fVal}">
                 </div>
 
-                <!-- ID de Documento / Pestaña del Servidor -->
+                <!-- Enlace URL Completo o ID de Hoja de Cálculo -->
                 <div class="form-group" style="margin-top:10px;">
-                  <label class="form-label">ID de Documento / Pestaña:</label>
-                  <input type="text" class="form-input" id="inp_doc_${m.id}" value="${m.pestana || ''}" placeholder="ej. MONAGAS_1370CC_OBPP o ID externo">
+                  <label class="form-label">Enlace URL Completo o ID de Hoja:</label>
+                  <input type="text" class="form-input" id="inp_doc_${m.id}" value="${m.pestana || ''}" placeholder="Pegue la URL completa (con #gid=...) o ID limpio">
+                  <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:4px; line-height:1.3;">
+                    Admite URLs completas de Google Sheets (ej. https://docs.google.com/spreadsheets/d/.../edit?gid=...#gid=...). El sistema extrae automáticamente el ID y la pestaña.
+                  </span>
                 </div>
               </div>
 
@@ -2608,13 +2650,20 @@
             subaction: "subir_logo",
             pin_maestro: state.cachedMasterPin,
             nombre: selectedLogoName,
+            nombre_archivo: selectedLogoName,
             tipo: selectedLogoType,
-            base64: selectedLogoBase64
+            base64: selectedLogoBase64,
+            imagen_base64: selectedLogoBase64
           });
           hideLoading();
 
           if (res.ok) {
-            showToast("Imagen subida con éxito al repositorio.", "success");
+            if (res.logo_url) {
+              state.activeLogoUrl = res.logo_url;
+              localStorage.setItem('inst_active_logo', res.logo_url);
+              updateLogoDisplay();
+            }
+            showToast("Imagen subida y activada con éxito en el sistema.", "success");
             document.getElementById('logoUploadActionBox').style.display = 'none';
             document.getElementById('uploadBoxLabel').innerText = "Haga clic o arrastre aquí su imagen de logo institucional";
             selectedLogoBase64 = "";
@@ -2719,6 +2768,7 @@
         handleLogoSelected,
         uploadLogoToStorage,
         assignActiveLogo,
+        sincronizarConfiguracionPublica,
         canViewModule,
         canEditModule,
         updateRecord,
