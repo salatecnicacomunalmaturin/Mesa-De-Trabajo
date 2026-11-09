@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#07070c">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Sistema Central de Gestión y Monitoreo Institucional</title>
+  <title>Dirección de Comunas y Movimientos Sociales del Municipio Maturín</title>
 
   <style>
     /* ==========================================================================
-       VARIABLES CSS & SISTEMA DE DISEÑO TRICOLOR + GLASSMORFISM
+       1. VARIABLES CSS & SISTEMA DE DISEÑO TRICOLOR + GLASSMORFISM
        ========================================================================== */
     :root {
       --color-yellow: #FFCC00;
@@ -28,12 +28,12 @@
       /* Modo Oscuro Profundo (Por Defecto) */
       --bg-body: #07070c;
       --bg-body-secondary: #0b0e14;
-      --surface-glass: rgba(15, 19, 29, 0.75);
-      --surface-glass-card: rgba(18, 24, 38, 0.68);
-      --surface-glass-modal: rgba(11, 14, 20, 0.94);
-      --surface-glass-input: rgba(255, 255, 255, 0.05);
-      --border-subtle: rgba(255, 255, 255, 0.09);
-      --border-card-hover: rgba(255, 204, 0, 0.4);
+      --surface-glass: rgba(15, 19, 29, 0.82);
+      --surface-glass-card: rgba(18, 24, 38, 0.72);
+      --surface-glass-modal: rgba(11, 14, 20, 0.96);
+      --surface-glass-input: rgba(20, 24, 35, 0.95);
+      --border-subtle: rgba(255, 255, 255, 0.1);
+      --border-card-hover: rgba(255, 204, 0, 0.45);
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --text-dim: #64748b;
@@ -41,7 +41,8 @@
       --blur-val: 18px;
 
       --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      --transition-standard: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-ios: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+      --transition-standard: all 0.25s ease;
       --radius-sm: 8px;
       --radius-md: 14px;
       --radius-lg: 20px;
@@ -51,12 +52,12 @@
     [data-theme="light"] {
       --bg-body: #f8fafc;
       --bg-body-secondary: #f1f5f9;
-      --surface-glass: rgba(255, 255, 255, 0.88);
-      --surface-glass-card: rgba(255, 255, 255, 0.85);
-      --surface-glass-modal: rgba(255, 255, 255, 0.96);
-      --surface-glass-input: rgba(0, 0, 0, 0.04);
-      --border-subtle: rgba(0, 36, 125, 0.12);
-      --border-card-hover: rgba(0, 102, 255, 0.4);
+      --surface-glass: rgba(255, 255, 255, 0.9);
+      --surface-glass-card: rgba(255, 255, 255, 0.88);
+      --surface-glass-modal: rgba(255, 255, 255, 0.98);
+      --surface-glass-input: rgba(240, 244, 248, 0.95);
+      --border-subtle: rgba(0, 36, 125, 0.14);
+      --border-card-hover: rgba(0, 102, 255, 0.45);
       --text-main: #0f172a;
       --text-muted: #475569;
       --text-dim: #64748b;
@@ -76,6 +77,7 @@
       transition: background-color 0.35s ease, color 0.35s ease;
     }
 
+    /* Fondo ambiental */
     body::before {
       content: "";
       position: fixed;
@@ -91,7 +93,38 @@
       z-index: 0;
     }
 
-    /* TOPBAR */
+    /* ==========================================================================
+       2. BARRA DE PROGRESO SUPERIOR FLUIDA (PREVENCIÓN DE PANTALLA CONGELADA)
+       ========================================================================== */
+    .top-progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      z-index: 99999;
+      background: linear-gradient(90deg, #FFCC00, #0066FF, #CF142B, #FFCC00);
+      background-size: 300% 100%;
+      opacity: 0;
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: opacity 0.25s ease, transform 0.4s ease;
+    }
+
+    .top-progress-bar.active {
+      opacity: 1;
+      transform: scaleX(1);
+      animation: progressSweep 1.6s linear infinite;
+    }
+
+    @keyframes progressSweep {
+      0% { background-position: 0% 0; }
+      100% { background-position: 300% 0; }
+    }
+
+    /* ==========================================================================
+       3. TOPBAR INSTITUCIONAL & LOGO CON ANIMACIÓN DE PULSO
+       ========================================================================== */
     .topbar {
       position: sticky;
       top: 0;
@@ -116,7 +149,7 @@
     .topbar-content {
       max-width: 1440px;
       margin: 0 auto;
-      padding: 12px 20px;
+      padding: 10px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -132,20 +165,47 @@
       cursor: pointer;
     }
 
-    .emblem-svg-wrap {
-      width: 44px;
-      height: 44px;
+    /* Espacio contenedor para logo con animación suave de pulso/desvanecimiento */
+    .logo-institution-wrap {
+      width: 46px;
+      height: 46px;
       flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      filter: drop-shadow(0 0 8px rgba(255, 204, 0, 0.3));
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 204, 0, 0.25);
+      animation: logoPulse 3s ease-in-out infinite;
+      transition: transform 0.3s ease;
+    }
+
+    .brand-container:hover .logo-institution-wrap {
+      transform: scale(1.05);
+    }
+
+    .logo-institution-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    @keyframes logoPulse {
+      0%, 100% {
+        box-shadow: 0 0 12px rgba(255, 204, 0, 0.2);
+        opacity: 0.95;
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(0, 102, 255, 0.35);
+        opacity: 1;
+      }
     }
 
     .brand-titles { display: flex; flex-direction: column; }
     .brand-tag {
-      font-size: 0.68rem;
-      letter-spacing: 1.6px;
+      font-size: 0.65rem;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
       font-weight: 800;
       background: var(--gradient-tricolor-horizontal);
@@ -153,10 +213,11 @@
       -webkit-text-fill-color: transparent;
     }
     .brand-title {
-      font-size: 1.05rem;
-      font-weight: 700;
+      font-size: 1rem;
+      font-weight: 800;
       letter-spacing: -0.2px;
-      line-height: 1.2;
+      line-height: 1.25;
+      max-width: 600px;
     }
 
     .topbar-actions { display: flex; align-items: center; gap: 10px; }
@@ -201,18 +262,258 @@
       box-shadow: 0 0 10px #10b981;
     }
 
-    /* CONTENEDOR CENTRAL MODULAR */
+    /* ==========================================================================
+       4. NAVEGACIÓN FLUIDA ESTILO iOS & BOTÓN "VOLVER"
+       ========================================================================== */
+    .btn-back-ios {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface-glass-input);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition-ios);
+    }
+    .btn-back-ios:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--color-yellow);
+      transform: translateX(-3px);
+    }
+    .btn-back-ios svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    /* Contenedor Modular con Transición iOS */
     #app-viewport {
       flex: 1;
       max-width: 1440px;
       width: 100%;
       margin: 0 auto;
-      padding: 28px 20px 60px;
+      padding: 24px 20px 60px;
       position: relative;
       z-index: 1;
+      transition: var(--transition-ios);
     }
 
-    /* COMPONENTES */
+    .view-fade-enter {
+      animation: viewEnter 0.35s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    @keyframes viewEnter {
+      from {
+        opacity: 0;
+        transform: scale(0.98) translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    /* ==========================================================================
+       5. CORRECCIÓN VISUAL CRÍTICA DE SELECTORES (GESTIÓN DE MÓDULOS)
+       ========================================================================== */
+    /* Estilo oscuro forzado para select */
+    select.form-input,
+    .form-input select,
+    select {
+      background-color: rgba(20, 24, 35, 0.95) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(255, 204, 0, 0.35) !important;
+      border-radius: var(--radius-md) !important;
+      padding: 10px 38px 10px 14px !important;
+      font-size: 0.88rem !important;
+      font-weight: 600 !important;
+      outline: none !important;
+      cursor: pointer !important;
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      appearance: none !important;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FFCC00'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e") !important;
+      background-repeat: no-repeat !important;
+      background-position: right 12px center !important;
+      background-size: 18px !important;
+      transition: var(--transition-standard) !important;
+    }
+
+    select.form-input:focus {
+      border-color: var(--color-blue) !important;
+      box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.25) !important;
+    }
+
+    /* Forzar fondo oscuro y texto blanco en todas las opciones de dropdowns */
+    select option {
+      background-color: #0b0e14 !important;
+      color: #ffffff !important;
+      padding: 12px !important;
+      font-size: 0.9rem !important;
+    }
+
+    /* Campo Condicional de Fecha con animación suave */
+    .fecha-input-wrap {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transform: translateY(-8px);
+      transition: max-height 0.35s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .fecha-input-wrap.visible {
+      max-height: 90px;
+      opacity: 1;
+      transform: translateY(0);
+      margin-top: 10px;
+    }
+
+    /* Input DateTime Local estilizado en Dark Mode */
+    input[type="datetime-local"].form-input {
+      color-scheme: dark;
+      background-color: rgba(20, 24, 35, 0.95);
+      color: #ffffff;
+      border: 1px solid rgba(255, 204, 0, 0.35);
+    }
+
+    /* ==========================================================================
+       6. TARJETAS TEMPORALES TRANSLÚCIDAS (SKELETON LOADER)
+       ========================================================================== */
+    .skeleton-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    .skeleton-card {
+      background: var(--surface-glass-card);
+      backdrop-filter: blur(var(--blur-val));
+      -webkit-backdrop-filter: blur(var(--blur-val));
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 26px 24px;
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .skeleton-pulse {
+      background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.03) 100%);
+      background-size: 200% 100%;
+      animation: skeletonShimmer 1.5s infinite;
+      border-radius: var(--radius-sm);
+    }
+
+    @keyframes skeletonShimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ==========================================================================
+       7. PANEL DE MANDO MAESTRO EN PANTALLA COMPLETA (FULL VIEW)
+       ========================================================================== */
+    .admin-full-view {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .admin-nav-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-subtle);
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .admin-nav-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.92rem;
+      padding: 12px 20px;
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 3px solid transparent;
+      transition: var(--transition-standard);
+      white-space: nowrap;
+    }
+
+    .admin-nav-tab:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .admin-nav-tab.active {
+      color: var(--color-yellow);
+      border-bottom-color: var(--color-yellow);
+      background: var(--surface-glass-input);
+    }
+
+    /* Gestor de Logos / Galería */
+    .logo-uploader-box {
+      border: 2px dashed rgba(255, 204, 0, 0.35);
+      border-radius: var(--radius-lg);
+      padding: 32px 20px;
+      text-align: center;
+      background: var(--surface-glass-input);
+      cursor: pointer;
+      transition: var(--transition-standard);
+    }
+
+    .logo-uploader-box:hover {
+      border-color: var(--color-yellow);
+      background: rgba(255, 204, 0, 0.04);
+    }
+
+    .logos-gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .logo-gallery-card {
+      background: var(--surface-glass-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+
+    .logo-gallery-card.active-logo {
+      border-color: var(--color-yellow);
+      box-shadow: 0 0 16px var(--color-yellow-glow);
+    }
+
+    .logo-thumb-preview {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 6px;
+    }
+
+    /* ==========================================================================
+       8. COMPONENTES Y UTILITARIOS GLOBALES
+       ========================================================================== */
     .glass-card {
       background: var(--surface-glass-card);
       backdrop-filter: blur(var(--blur-val));
@@ -260,6 +561,7 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
+
     .form-input {
       width: 100%;
       background: var(--surface-glass-input);
@@ -293,19 +595,23 @@
     .admin-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
 
     .action-btn-sm {
-      padding: 6px 12px;
+      padding: 7px 14px;
       border-radius: var(--radius-sm);
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       font-weight: 700;
       border: none;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       transition: var(--transition-standard);
     }
     .action-btn-approve { background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; }
     .action-btn-approve:hover { background: #10b981; color: #fff; }
+
+    .action-btn-suspend { background: rgba(255, 204, 0, 0.2); border: 1px solid rgba(255, 204, 0, 0.4); color: var(--color-yellow); }
+    .action-btn-suspend:hover { background: var(--color-yellow); color: #000; }
+
     .action-btn-reject { background: rgba(255, 46, 77, 0.2); border: 1px solid rgba(255, 46, 77, 0.4); color: #f87171; }
     .action-btn-reject:hover { background: var(--color-red); color: #fff; }
 
@@ -321,9 +627,10 @@
       border-radius: var(--radius-full);
     }
     .status-badge.activo { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; }
-    .status-badge.bloqueado { background: rgba(255, 46, 77, 0.12); border: 1px solid rgba(255, 46, 77, 0.35); color: var(--color-red); }
-    .status-badge.fecha { background: rgba(255, 204, 0, 0.15); border: 1px solid rgba(255, 204, 0, 0.45); color: var(--color-yellow); }
+    .status-badge.bloqueado, .status-badge.suspendido { background: rgba(255, 46, 77, 0.12); border: 1px solid rgba(255, 46, 77, 0.35); color: var(--color-red); }
+    .status-badge.fecha, .status-badge.pendiente { background: rgba(255, 204, 0, 0.15); border: 1px solid rgba(255, 204, 0, 0.45); color: var(--color-yellow); }
 
+    /* Modales */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -342,7 +649,7 @@
     .modal-backdrop.open { opacity: 1; pointer-events: all; }
     .modal-container {
       width: 100%;
-      max-width: 680px;
+      max-width: 440px;
       max-height: 90vh;
       overflow-y: auto;
       background: var(--surface-glass-modal);
@@ -362,10 +669,10 @@
       padding-bottom: 12px;
       border-bottom: 1px solid var(--border-subtle);
     }
-    .modal-title { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+    .modal-title { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
     .modal-close-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5rem; line-height: 1; }
 
-    /* LOADER TRICOLOR 3 ARCOS */
+    /* Loader global 3 arcos */
     .loading-overlay {
       position: fixed;
       inset: 0;
@@ -420,12 +727,12 @@
       backdrop-filter: blur(12px);
       animation: slideIn 0.3s ease;
     }
-    .toast-item.success { background: rgba(16, 185, 129, 0.9); color: #fff; }
-    .toast-item.danger { background: rgba(239, 68, 68, 0.9); color: #fff; }
-    .toast-item.info { background: rgba(0, 102, 255, 0.9); color: #fff; }
+    .toast-item.success { background: rgba(16, 185, 129, 0.95); color: #fff; }
+    .toast-item.danger { background: rgba(239, 68, 68, 0.95); color: #fff; }
+    .toast-item.info { background: rgba(0, 102, 255, 0.95); color: #fff; }
     @keyframes slideIn { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-    /* GRID MENU */
+    /* GRID MENU PRINCIPAL */
     .modules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
     .module-card { padding: 26px 24px; display: flex; flex-direction: column; justify-content: space-between; min-height: 280px; }
     .module-icon-wrap {
@@ -506,39 +813,33 @@
 <body data-theme="dark">
 
   <!-- ==========================================================================
+       BARRA DE PROGRESO SUPERIOR FLUIDA
+       ========================================================================== -->
+  <div class="top-progress-bar" id="topProgressBar"></div>
+
+  <!-- ==========================================================================
        TOPBAR NAVEGACIÓN
        ========================================================================== -->
   <header class="topbar">
     <div class="topbar-content">
-      <div class="brand-container" onclick="window.AppCore.showDashboardMenu()" title="Ir al Menú Central">
-        <div class="emblem-svg-wrap">
-          <svg viewBox="0 0 100 100" fill="none">
-            <defs>
-              <linearGradient id="shieldGrad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#FFCC00" />
-                <stop offset="50%" stop-color="#0066FF" />
-                <stop offset="100%" stop-color="#CF142B" />
-              </linearGradient>
-            </defs>
-            <path d="M50 8 L85 24 C85 62 50 92 50 92 C50 92 15 62 15 24 Z" stroke="url(#shieldGrad)" stroke-width="4" fill="rgba(7, 7, 12, 0.85)" />
-            <path d="M26 29 L74 29 C71 42 63 54 50 63 C37 54 29 42 26 29 Z" fill="#00247D" />
-            <path d="M23 27 L77 27 L73 19 L27 19 Z" fill="#FFCC00" />
-            <path d="M33 46 C37 54 44 59 50 63 C56 59 63 54 67 46 Z" fill="#CF142B" />
-            <circle cx="36" cy="34" r="1.6" fill="#FFFFFF" />
-            <circle cx="40" cy="31" r="1.6" fill="#FFFFFF" />
-            <circle cx="45" cy="30" r="1.6" fill="#FFFFFF" />
-            <circle cx="50" cy="29.5" r="1.8" fill="#FFFFFF" />
-            <circle cx="55" cy="30" r="1.6" fill="#FFFFFF" />
-            <circle cx="60" cy="31" r="1.6" fill="#FFFFFF" />
-            <circle cx="64" cy="34" r="1.6" fill="#FFFFFF" />
-            <circle cx="50" cy="35" r="1.6" fill="#FFFFFF" />
-            <circle cx="50" cy="48" r="4" stroke="#FFCC00" stroke-width="1.5" />
-            <circle cx="50" cy="48" r="1.5" fill="#FFCC00" />
+      <div class="brand-container" onclick="window.AppCore.showDashboardMenu()" title="Ir al Menú Principal">
+        
+        <!-- Espacio para Logo Institucional con animación de pulso suave -->
+        <div class="logo-institution-wrap" id="navbarLogoContainer">
+          <svg viewBox="0 0 100 100" fill="none" id="defaultLogoSvg">
+            <circle cx="50" cy="50" r="44" stroke="#FFCC00" stroke-width="3" stroke-dasharray="6 3" />
+            <circle cx="50" cy="50" r="34" fill="#00247D" />
+            <path d="M50 22 L62 46 L38 46 Z" fill="#FFCC00" />
+            <circle cx="50" cy="58" r="10" fill="#CF142B" />
+            <circle cx="34" cy="50" r="4" fill="#FFFFFF" />
+            <circle cx="66" cy="50" r="4" fill="#FFFFFF" />
           </svg>
+          <img id="navbarLogoImg" style="display:none;" alt="Logo Institucional Maturín">
         </div>
+
         <div class="brand-titles">
-          <span class="brand-tag">SISTEMA NACIONAL DE CONTROL</span>
-          <span class="brand-title">Gestión y Monitoreo Central</span>
+          <span class="brand-tag">ALCALDÍA BOLIVARIANA DE MATURÍN</span>
+          <span class="brand-title">Dirección de Comunas y Movimientos Sociales del Municipio Maturín</span>
         </div>
       </div>
 
@@ -553,7 +854,8 @@
           <svg id="iconMoon" style="display:none;" viewBox="0 0 24 24"><path d="M10 7C10 10.87 13.13 14 17 14C18.46 14 19.82 13.55 20.95 12.79C20.48 17.45 16.54 21 11.75 21C6.37 21 2 16.63 2 11.25C2 6.46 5.55 2.52 10.21 2.05C9.45 3.18 9 4.54 9 6C9 6.34 9.02 6.67 9.07 7H10ZM12 4.1C8.62 4.97 6 8.05 6 11.75C6 15.62 9.13 18.75 13 18.75C16.7 18.75 19.78 16.14 20.65 12.75C19.54 13.54 18.23 14 16.81 14C12.5 14 9 10.5 9 6.19C9 4.77 9.46 3.46 10.25 2.35C10.8 2.87 11.41 3.47 12 4.1Z"/></svg>
         </button>
 
-        <button class="icon-btn settings-btn" id="btnOpenSettings" title="Configuración Maestra">
+        <!-- Tuerca de Ajustes que abre el Panel Maestro Full View -->
+        <button class="icon-btn settings-btn" id="btnOpenSettings" title="Panel de Mando Maestro">
           <svg viewBox="0 0 24 24"><path d="M12 1L14.39 3.39C14.77 3.77 15.29 3.99 15.83 3.99H17C18.1 3.99 19 4.89 19 6V7.17C19 7.71 19.22 8.23 19.61 8.61L22 11V13L19.61 15.39C19.22 15.77 19 16.29 19 16.83V18C19 19.1 18.1 20 17 20H15.83C15.29 20 14.77 20.22 14.39 20.61L12 23L9.61 20.61C9.23 20.22 8.71 20 8.17 20H7C5.9 20 5 19.1 5 18V16.83C5 16.29 4.78 15.77 4.39 15.39L2 13V11L4.39 8.61C4.78 8.23 5 7.71 5 7.17V6C5 4.89 5.9 3.99 7 3.99H8.17C8.71 3.99 9.23 3.77 9.61 3.39L12 1ZM12 9C10.34 9 9 10.34 9 12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12C15 10.34 13.66 9 12 9Z"/></svg>
         </button>
 
@@ -565,21 +867,21 @@
   </header>
 
   <!-- ==========================================================================
-       CONTENEDOR CENTRAL: APP-VIEWPORT (MONTAJE MODULAR)
+       CONTENEDOR CENTRAL: APP-VIEWPORT (MONTAJE MODULAR CON ANIMACIÓN iOS)
        ========================================================================== -->
-  <main id="app-viewport"></main>
+  <main id="app-viewport" class="view-fade-enter"></main>
 
   <!-- ==========================================================================
-       MODAL 1: DESAFÍO DE PIN MAESTRO (DELEGADO AL BACKEND)
+       MODAL: DESAFÍO DE PIN MAESTRO PARA ENTRAR AL PANEL DE PANTALLA COMPLETA
        ========================================================================== -->
   <div class="modal-backdrop" id="modalMasterPin">
-    <div class="modal-container" style="max-width: 400px; text-align: center;">
+    <div class="modal-container" style="text-align: center;">
       <div class="modal-header" style="justify-content: center;">
         <h3 class="modal-title">Acceso de Administrador</h3>
         <button class="modal-close-btn" onclick="AppCore.closeModal('modalMasterPin')">&times;</button>
       </div>
       <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
-        Ingrese el <strong>PIN Maestro de Seguridad</strong> para verificar autorización en el servidor:
+        Ingrese el <strong>PIN Maestro de Seguridad</strong> para desbloquear la consola de administración:
       </p>
       <div class="form-group">
         <input type="password" id="inputMasterPin" class="form-input" style="text-align: center; font-size: 1.6rem; letter-spacing: 8px; color: var(--color-yellow);" placeholder="••••" maxlength="8">
@@ -592,59 +894,16 @@
   </div>
 
   <!-- ==========================================================================
-       MODAL 2: PANEL DE AJUSTES MAESTROS
-       ========================================================================== -->
-  <div class="modal-backdrop" id="modalAdminPanel">
-    <div class="modal-container">
-      <div class="modal-header">
-        <h3 class="modal-title">Panel de Mando Maestro</h3>
-        <button class="modal-close-btn" onclick="AppCore.closeModal('modalAdminPanel')">&times;</button>
-      </div>
-
-      <div style="background:rgba(0,102,255,0.08); border:1px solid rgba(0,102,255,0.25); border-radius:var(--radius-md); padding:14px; margin-bottom:20px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <span style="font-size:0.75rem; font-weight:700; color:var(--color-blue); text-transform:uppercase;">URL Google Apps Script (Web App):</span>
-          <span id="backendStatusTag" class="status-badge fecha">Verificando...</span>
-        </div>
-        <div style="display:flex; gap:8px;">
-          <input type="url" id="inputBackendUrl" class="form-input" style="font-size:0.8rem; padding:8px 12px;" placeholder="https://script.google.com/macros/s/.../exec">
-          <button type="button" class="action-btn-sm action-btn-approve" onclick="AppCore.saveBackendUrl()">Guardar</button>
-        </div>
-      </div>
-
-      <div style="display:flex; border-bottom:1px solid var(--border-subtle); margin-bottom:18px; gap:10px;">
-        <button class="action-btn-sm active" id="tabUsersBtn" onclick="AppCore.switchAdminTab('users')">1. Solicitudes de Usuarios</button>
-        <button class="action-btn-sm" id="tabModulesBtn" onclick="AppCore.switchAdminTab('modules')">2. Gestión de Módulos</button>
-      </div>
-
-      <div id="adminTabUsers">
-        <div class="table-responsive">
-          <table class="admin-table">
-            <thead>
-              <tr><th>ID</th><th>Usuario</th><th>Correo</th><th>Estado</th><th style="text-align:right;">Acciones</th></tr>
-            </thead>
-            <tbody id="adminUsersTbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="adminTabModules" style="display:none;">
-        <div id="adminModulesList"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==========================================================================
-       MODAL 3: PIN SECUNDARIO DE MÓDULO (DELEGADO AL BACKEND)
+       MODAL: PIN SECUNDARIO DE MÓDULO
        ========================================================================== -->
   <div class="modal-backdrop" id="modalModulePin">
-    <div class="modal-container" style="max-width: 400px; text-align: center;">
+    <div class="modal-container" style="text-align: center;">
       <div class="modal-header" style="justify-content: center;">
         <h3 class="modal-title" id="modulePinTitle">PIN Requerido</h3>
         <button class="modal-close-btn" onclick="AppCore.closeModal('modalModulePin')">&times;</button>
       </div>
       <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
-        Ingrese su <strong>PIN secundario</strong> para verificar autorización de acceso en el servidor:
+        Ingrese su <strong>PIN secundario</strong> para verificar autorización de acceso:
       </p>
       <div class="form-group">
         <input type="password" id="inputSecPin" class="form-input" style="text-align: center; font-size: 1.5rem; letter-spacing: 6px; color: var(--color-yellow);" placeholder="••••" maxlength="6">
@@ -681,14 +940,10 @@
   <script src="monitores/rrhh.js"></script>
 
   <!-- ==========================================================================
-       LÓGICA DEL CASCARÓN PRINCIPAL (CERO CREDENCIALES EN FRONTEND)
+       LÓGICA DEL CASCARÓN PRINCIPAL
        ========================================================================== -->
   <script>
-    /**
-     * CONSTANTE GLOBAL DE ACCESO AL BACKEND
-     * CERO CREDENCIALES: El frontend no almacena contraseñas, PINs ni llaves maestras.
-     */
-    const API_URL = localStorage.getItem('INST_API_URL') || "https://script.google.com/macros/s/AKfycbz81PMA6uv0xf3-0vFdli9gGcPGxmarFjmVvcsAs7ipltV54iZlKzuOLF5mEGW2v2Lz/exec";
+    const API_URL = localStorage.getItem('INST_API_URL') || "URL_DE_APPS_SCRIPT";
 
     window.AppCore = (function () {
       let state = {
@@ -696,15 +951,17 @@
         apiUrl: API_URL,
         currentUser: JSON.parse(localStorage.getItem('inst_auth_user') || 'null'),
         masterPinValidated: false,
+        cachedMasterPin: "",
         activeModule: null,
         pendingModuleTarget: null,
+        activeLogoUrl: localStorage.getItem('inst_active_logo') || "",
         modules: []
       };
 
       function init() {
         applyTheme(state.theme);
         setupEventListeners();
-        updateBackendStatusBadge();
+        updateLogoDisplay();
 
         if (state.currentUser && state.currentUser.estado === "ACTIVO") {
           showDashboardMenu();
@@ -725,12 +982,24 @@
         applyTheme(state.theme === 'dark' ? 'light' : 'dark');
       }
 
+      function startProgressBar() {
+        const p = document.getElementById('topProgressBar');
+        if (p) p.classList.add('active');
+      }
+
+      function stopProgressBar() {
+        const p = document.getElementById('topProgressBar');
+        if (p) p.classList.remove('active');
+      }
+
       function showLoading(msg = "Procesando...") {
+        startProgressBar();
         document.getElementById('loadingMsg').innerText = msg;
         document.getElementById('loadingOverlay').classList.add('active');
       }
 
       function hideLoading() {
+        stopProgressBar();
         document.getElementById('loadingOverlay').classList.remove('active');
       }
 
@@ -746,24 +1015,39 @@
         }, 3200);
       }
 
-      /**
-       * Despacho universal POST al backend en Google Apps Script
-       */
-      async function postBackend(payload) {
-        if (!state.apiUrl || !state.apiUrl.startsWith('http')) {
-          throw new Error("Debe configurar primero la URL de Google Apps Script en la Tuerca de Ajustes.");
+      function updateLogoDisplay() {
+        const img = document.getElementById('navbarLogoImg');
+        const def = document.getElementById('defaultLogoSvg');
+        if (state.activeLogoUrl && state.activeLogoUrl.startsWith('http')) {
+          img.src = state.activeLogoUrl;
+          img.style.display = 'block';
+          def.style.display = 'none';
+        } else {
+          img.style.display = 'none';
+          def.style.display = 'block';
         }
-        const resp = await fetch(state.apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
-        });
-        return await resp.json();
       }
 
-      /**
-       * Actualización bidireccional hacia Google Sheets (CRUD)
-       */
+      async function postBackend(payload) {
+        if (!state.apiUrl || !state.apiUrl.startsWith('http')) {
+          throw new Error("Debe ingresar la URL de su Web App de Google Apps Script en la Tuerca de Ajustes.");
+        }
+        startProgressBar();
+        try {
+          const resp = await fetch(state.apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+          });
+          const json = await resp.json();
+          stopProgressBar();
+          return json;
+        } catch (err) {
+          stopProgressBar();
+          throw err;
+        }
+      }
+
       async function updateRecord(payload) {
         const json = await postBackend(payload);
         if (!json.ok) throw new Error(json.msg || "Error al actualizar en Google Sheets.");
@@ -771,19 +1055,30 @@
       }
 
       // ==========================================================================
-      // VISTA DE ACCESO (LOGIN & REGISTRO CON OTP)
+      // VISTA DE ACCESO (LOGIN & REGISTRO)
       // ==========================================================================
       function showAuthView() {
         document.getElementById('userPill').style.display = 'none';
         document.getElementById('btnLogout').style.display = 'none';
         const viewport = document.getElementById('app-viewport');
+        viewport.className = "view-fade-enter";
 
         viewport.innerHTML = `
           <div style="display:flex; justify-content:center; align-items:center; min-height:calc(100vh - 140px); padding:20px 10px;">
             <div class="glass-card" style="width:100%; max-width:460px; padding:36px 30px;">
               <div style="text-align:center; margin-bottom:26px;">
-                <h1 style="font-size:1.35rem; font-weight:900; margin-bottom:4px;">Acceso Institucional</h1>
-                <p style="font-size:0.85rem; color:var(--text-muted);">Autenticación Delegada en Google Apps Script</p>
+                <div class="logo-institution-wrap" style="width:68px; height:68px; margin:0 auto 14px;">
+                  ${state.activeLogoUrl ? `<img src="${state.activeLogoUrl}" alt="Logo">` : `
+                    <svg viewBox="0 0 100 100" fill="none">
+                      <circle cx="50" cy="50" r="44" stroke="#FFCC00" stroke-width="3" stroke-dasharray="6 3" />
+                      <circle cx="50" cy="50" r="34" fill="#00247D" />
+                      <path d="M50 22 L62 46 L38 46 Z" fill="#FFCC00" />
+                      <circle cx="50" cy="58" r="10" fill="#CF142B" />
+                    </svg>
+                  `}
+                </div>
+                <h1 style="font-size:1.25rem; font-weight:900; margin-bottom:4px; line-height:1.3;">Dirección de Comunas y Movimientos Sociales</h1>
+                <p style="font-size:0.8rem; color:var(--text-muted);">Municipio Maturín &bull; Autenticación Delegada</p>
               </div>
 
               <div id="authAlert" class="alert-banner" style="display:none;"></div>
@@ -793,7 +1088,6 @@
                 <button id="tabAuthReg" class="action-btn-sm" style="justify-content:center; padding:10px; border-radius:var(--radius-full); background:transparent; color:var(--text-muted);" onclick="AppCore.switchAuthTab('reg')">Registrar Cuenta</button>
               </div>
 
-              <!-- FORM LOGIN -->
               <form id="formLogin" onsubmit="AppCore.handleLoginSubmit(event)">
                 <div class="form-group">
                   <label class="form-label">Usuario o Correo</label>
@@ -808,16 +1102,15 @@
                 </button>
               </form>
 
-              <!-- FORM REGISTRO CON OTP -->
               <div id="formRegContainer" style="display:none;">
                 <form id="formRegStepA" onsubmit="AppCore.handleRegStepASubmit(event)">
                   <div class="form-group">
                     <label class="form-label">Nombre de Usuario</label>
-                    <input type="text" id="regUser" class="form-input" placeholder="ej. analista.sala" required>
+                    <input type="text" id="regUser" class="form-input" placeholder="ej. promotor.comunal" required>
                   </div>
                   <div class="form-group">
                     <label class="form-label">Correo Institucional</label>
-                    <input type="email" id="regEmail" class="form-input" placeholder="usuario@institucion.gob.ve" required>
+                    <input type="email" id="regEmail" class="form-input" placeholder="usuario@oficina.gob.ve" required>
                   </div>
                   <div class="form-group">
                     <label class="form-label">Contraseña</label>
@@ -875,22 +1168,14 @@
         }
       }
 
-      /**
-       * Autenticación 100% delegada en Apps Script (CERO comparación local)
-       */
       async function handleLoginSubmit(e) {
         e.preventDefault();
         const u = document.getElementById('loginUser').value.trim();
         const p = document.getElementById('loginPass').value;
 
         showLoading("Validando credenciales en Google Apps Script...");
-
         try {
-          const res = await postBackend({
-            accion: "login",
-            identificador: u,
-            password: p
-          });
+          const res = await postBackend({ accion: "login", identificador: u, password: p });
           hideLoading();
 
           if (res.ok) {
@@ -902,7 +1187,7 @@
           }
         } catch (err) {
           hideLoading();
-          showAuthAlert(err.message || "Error al conectar con Google Apps Script.", "danger");
+          showAuthAlert(err.message, "danger");
         }
       }
 
@@ -915,21 +1200,16 @@
         const p = document.getElementById('regPass').value;
         tempReg = { usuario: u, correo: em, password: p };
 
-        showLoading("Despachando código OTP al correo...");
+        showLoading("Despachando código OTP por correo institucional...");
         try {
-          const res = await postBackend({
-            accion: "solicitar_codigo",
-            usuario: u,
-            correo: em
-          });
+          const res = await postBackend({ accion: "solicitar_codigo", usuario: u, correo: em });
           hideLoading();
-
           if (res.ok) {
             document.getElementById('formRegStepA').style.display = 'none';
             document.getElementById('formRegStepB').style.display = 'block';
             showToast("Código de 6 dígitos enviado.", "info");
           } else {
-            showAuthAlert(res.msg || "Error al solicitar código OTP.", "danger");
+            showAuthAlert(res.msg, "danger");
           }
         } catch (err) {
           hideLoading();
@@ -951,7 +1231,7 @@
         let code = "";
         for (let i = 0; i < 6; i++) code += (document.getElementById(`otp_${i}`).value || "");
 
-        showLoading("Confirmando registro en servidor...");
+        showLoading("Confirmando registro...");
         try {
           const res = await postBackend({
             accion: "registrar",
@@ -961,12 +1241,11 @@
             otp: code
           });
           hideLoading();
-
           if (res.ok) {
             switchAuthTab('login');
             showAuthAlert("Solicitud enviada. Tu cuenta debe ser aprobada por el administrador", "success");
           } else {
-            showAuthAlert(res.msg || "Código OTP incorrecto.", "danger");
+            showAuthAlert(res.msg, "danger");
           }
         } catch (err) {
           hideLoading();
@@ -983,7 +1262,7 @@
       }
 
       // ==========================================================================
-      // MENÚ DE MÓDULOS DINÁMICO
+      // MENÚ PRINCIPAL (CON SKELETONS Y PREVENCIÓN DE PANTALLA CONGELADA)
       // ==========================================================================
       async function showDashboardMenu() {
         if (state.activeModule && state.activeModule.unmount) {
@@ -992,33 +1271,57 @@
         }
 
         const viewport = document.getElementById('app-viewport');
+        viewport.className = "view-fade-enter";
+
         document.getElementById('userPill').style.display = 'flex';
         document.getElementById('btnLogout').style.display = 'inline-flex';
         document.getElementById('navUsername').innerText = state.currentUser ? state.currentUser.usuario : "operador";
 
+        // Renderizado inicial con Skeleton Loader para cero pantalla congelada
         viewport.innerHTML = `
-          <div style="margin-bottom:30px;">
+          <div style="margin-bottom:28px;">
             <span style="font-size:0.75rem; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--color-yellow);">
-              PLATAFORMA CENTRALIZADA DE CONTROL
+              SISTEMA CENTRAL DE CONTROL Y GESTIÓN
             </span>
             <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px; margin-top:4px;">
               <div>
-                <h2 style="font-size:1.8rem; font-weight:900; letter-spacing:-0.5px;">Monitores Institucionales</h2>
+                <h2 style="font-size:1.75rem; font-weight:900; letter-spacing:-0.5px;">Monitores Institucionales</h2>
                 <p style="color:var(--text-muted); font-size:0.9rem; margin-top:4px;">
-                  Sincronización en vivo con Google Sheets &bull; Cero Credenciales en Frontend
+                  Dirección de Comunas y Movimientos Sociales del Municipio Maturín
                 </p>
               </div>
               <div class="status-badge activo" style="padding:6px 14px;">
                 <span class="status-dot-active"></span>
-                <span>Canal Criptográfico Activo</span>
+                <span>Conexión Segura Activa</span>
               </div>
             </div>
           </div>
 
-          <div class="modules-grid" id="menuCardsContainer"></div>
+          <div class="skeleton-grid" id="menuCardsContainer">
+            <div class="skeleton-card">
+              <div>
+                <div class="skeleton-pulse" style="width:52px; height:52px; margin-bottom:18px;"></div>
+                <div class="skeleton-pulse" style="width:70%; height:20px; margin-bottom:12px;"></div>
+                <div class="skeleton-pulse" style="width:90%; height:14px; margin-bottom:8px;"></div>
+                <div class="skeleton-pulse" style="width:60%; height:14px;"></div>
+              </div>
+              <div class="skeleton-pulse" style="width:100%; height:44px; margin-top:20px;"></div>
+            </div>
+            <div class="skeleton-card">
+              <div>
+                <div class="skeleton-pulse" style="width:52px; height:52px; margin-bottom:18px;"></div>
+                <div class="skeleton-pulse" style="width:65%; height:20px; margin-bottom:12px;"></div>
+                <div class="skeleton-pulse" style="width:85%; height:14px; margin-bottom:8px;"></div>
+                <div class="skeleton-pulse" style="width:50%; height:14px;"></div>
+              </div>
+              <div class="skeleton-pulse" style="width:100%; height:44px; margin-top:20px;"></div>
+            </div>
+          </div>
         `;
 
+        startProgressBar();
         await loadModules();
+        stopProgressBar();
         renderMenuCards();
       }
 
@@ -1029,23 +1332,29 @@
             const json = await resp.json();
             if (json.ok && json.modulos) {
               state.modules = json.modulos;
+              if (json.active_logo_url) {
+                state.activeLogoUrl = json.active_logo_url;
+                localStorage.setItem('inst_active_logo', json.active_logo_url);
+                updateLogoDisplay();
+              }
               return;
             }
           }
         } catch (e) {
-          console.warn("[AppCore] Falla cargando módulos desde Google Sheets:", e);
+          console.warn("[AppCore] Falla cargando módulos desde backend:", e);
         }
 
-        // Módulos base por defecto
+        // Datos por defecto
         state.modules = [
-          { id: "votos", nombre: "Monitor de Votos", descripcion: "Control situacional y actas electorales", icono: "ballot", estado: "ACTIVO", requiere_pin: false },
-          { id: "rrhh", nombre: "Estadísticas de Personal", descripcion: "Nómina y asistencia de áreas", icono: "users", estado: "ACTIVO", requiere_pin: false }
+          { id: "votos", nombre: "Monitor de Votos y Consulta Comunal", descripcion: "Control situacional de centros electorales, actas y participación comunal", icono: "ballot", estado: "ACTIVO", requiere_pin: false },
+          { id: "rrhh", nombre: "Estadísticas de Personal y Movimientos", descripcion: "Nómina de promotores comunales, directores de área y asistencia", icono: "users", estado: "ACTIVO", requiere_pin: false }
         ];
       }
 
       function renderMenuCards() {
         const container = document.getElementById('menuCardsContainer');
         if (!container) return;
+        container.className = "modules-grid";
         container.innerHTML = '';
 
         state.modules.forEach(m => {
@@ -1095,13 +1404,49 @@
           `;
           container.appendChild(card);
         });
+
+        startCountdowns();
       }
 
       function getModuleIconSvg(tipo) {
         if (tipo === 'ballot' || tipo === 'vote') {
           return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg>`;
         }
-        return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11C17.66 11 18.99 9.66 18.99 8C18.99 6.34 17.66 5 16 5C14.34 5 13 6.34 13 8C13 9.66 14.34 11 16 11ZM8 11C9.66 11 10.99 9.66 10.99 8C10.99 6.34 9.66 5 8 5C6.34 5 5 6.34 5 8C5 9.66 6.34 11 8 11ZM8 13C5.67 13 1 14.17 1 16.5V19H15V16.5C15 14.17 10.33 13 8 13ZM16 13C15.71 13 15.38 13.02 15.03 13.05C16.19 13.89 17 15.02 17 16.5V19H23V16.5C23 14.17 18.33 13 16 13Z"/></svg>`;
+        if (tipo === 'users') {
+          return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11C17.66 11 18.99 9.66 18.99 8C18.99 6.34 17.66 5 16 5C14.34 5 13 6.34 13 8C13 9.66 14.34 11 16 11ZM8 11C9.66 11 10.99 9.66 10.99 8C10.99 6.34 9.66 5 8 5C6.34 5 5 6.34 5 8C5 9.66 6.34 11 8 11ZM8 13C5.67 13 1 14.17 1 16.5V19H15V16.5C15 14.17 10.33 13 8 13ZM16 13C15.71 13 15.38 13.02 15.03 13.05C16.19 13.89 17 15.02 17 16.5V19H23V16.5C23 14.17 18.33 13 16 13Z"/></svg>`;
+        }
+        return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14H12L11 22L21 10H12L13 2Z"/></svg>`;
+      }
+
+      function startCountdowns() {
+        setInterval(() => {
+          const now = Date.now();
+          let changed = false;
+          state.modules.forEach(m => {
+            if (m.estado === 'FECHA' && m.fecha_apertura) {
+              const diff = new Date(m.fecha_apertura).getTime() - now;
+              if (diff <= 0) {
+                m.estado = 'ACTIVO';
+                changed = true;
+              } else {
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const min = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+                const elD = document.getElementById(`cd_d_${m.id}`);
+                const elH = document.getElementById(`cd_h_${m.id}`);
+                const elM = document.getElementById(`cd_m_${m.id}`);
+                const elS = document.getElementById(`cd_s_${m.id}`);
+                if (elD) elD.innerText = d < 10 ? '0' + d : d;
+                if (elH) elH.innerText = h < 10 ? '0' + h : h;
+                if (elM) elM.innerText = min < 10 ? '0' + min : min;
+                if (elS) elS.innerText = s < 10 ? '0' + s : s;
+              }
+            }
+          });
+          if (changed) renderMenuCards();
+        }, 1000);
       }
 
       function launchModule(modId) {
@@ -1120,15 +1465,12 @@
         }
       }
 
-      /**
-       * Verificación de PIN de módulo delegada en Apps Script
-       */
       async function submitModulePin() {
         const pin = document.getElementById('inputSecPin').value.trim();
         const mod = state.pendingModuleTarget;
         if (!mod || !pin) return;
 
-        showLoading("Verificando credencial de módulo en Apps Script...");
+        showLoading("Verificando credencial en Apps Script...");
         try {
           const res = await postBackend({
             accion: "verificar_pin_modulo",
@@ -1155,6 +1497,8 @@
 
       function executeModuleMount(mod) {
         const viewport = document.getElementById('app-viewport');
+        viewport.className = "view-fade-enter";
+
         if ((mod.id === "votos" || mod.id.includes("VOT")) && window.MonitorVotos) {
           state.activeModule = window.MonitorVotos;
           window.MonitorVotos.mount(viewport);
@@ -1167,11 +1511,11 @@
       }
 
       // ==========================================================================
-      // AJUSTES MAESTROS (VERIFICACIÓN DE PIN 100% DELEGADA AL SERVIDOR)
+      // PANEL DE MANDO MAESTRO EN PANTALLA COMPLETA (FULL VIEW)
       // ==========================================================================
       function openSettings() {
         if (state.masterPinValidated) {
-          showAdminPanel();
+          showAdminFullView();
         } else {
           document.getElementById('inputMasterPin').value = '';
           document.getElementById('masterPinAlert').style.display = 'none';
@@ -1180,16 +1524,11 @@
         }
       }
 
-      /**
-       * NO existe comparación local 'if (pin === ...)'
-       * Envía `{ accion: "verificar_pin", pin: input }` al Apps Script.
-       */
       async function verifyMasterPin() {
         const pin = document.getElementById('inputMasterPin').value.trim();
         if (!pin) return;
 
         showLoading("Verificando autorización en el servidor...");
-
         try {
           const res = await postBackend({
             accion: "verificar_pin",
@@ -1199,8 +1538,9 @@
 
           if (res.ok) {
             state.masterPinValidated = true;
+            state.cachedMasterPin = pin;
             closeModal('modalMasterPin');
-            showAdminPanel();
+            showAdminFullView();
           } else {
             const a = document.getElementById('masterPinAlert');
             a.innerText = res.msg || "PIN Maestro no autorizado.";
@@ -1214,121 +1554,460 @@
         }
       }
 
-      function showAdminPanel() {
-        document.getElementById('inputBackendUrl').value = state.apiUrl;
+      function showAdminFullView() {
+        if (state.activeModule && state.activeModule.unmount) {
+          state.activeModule.unmount();
+          state.activeModule = null;
+        }
+
+        const viewport = document.getElementById('app-viewport');
+        viewport.className = "view-fade-enter";
+
+        viewport.innerHTML = `
+          <div class="admin-full-view">
+            
+            <!-- Barra superior del panel con botón Volver iOS -->
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+              <div style="display:flex; align-items:center; gap:14px;">
+                <button class="btn-back-ios" onclick="AppCore.showDashboardMenu()">
+                  <svg viewBox="0 0 24 24"><path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z"/></svg>
+                  <span>Volver al Menú</span>
+                </button>
+                <div>
+                  <span style="font-size:0.75rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:var(--color-yellow);">
+                    SALA DE MANDO ESTRATÉGICO
+                  </span>
+                  <h2 style="font-size:1.6rem; font-weight:900; margin:2px 0 0; letter-spacing:-0.4px;">
+                    Panel de Mando Maestro
+                  </h2>
+                </div>
+              </div>
+
+              <!-- Conexión Web App -->
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="url" id="inputBackendUrl" class="form-input" style="width:280px; padding:8px 12px; font-size:0.8rem;" value="${state.apiUrl}" placeholder="URL Google Apps Script">
+                <button class="action-btn-sm action-btn-approve" onclick="AppCore.saveBackendUrl()">Guardar URL</button>
+              </div>
+            </div>
+
+            <!-- Pestañas Administrativas -->
+            <div class="admin-nav-tabs">
+              <button class="admin-nav-tab active" id="tabAdminUsersBtn" onclick="AppCore.switchAdminTab('users')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11C17.66 11 18.99 9.66 18.99 8C18.99 6.34 17.66 5 16 5C14.34 5 13 6.34 13 8C13 9.66 14.34 11 16 11ZM8 11C9.66 11 10.99 9.66 10.99 8C10.99 6.34 9.66 5 8 5C6.34 5 5 6.34 5 8C5 9.66 6.34 11 8 11ZM8 13C5.67 13 1 14.17 1 16.5V19H15V16.5C15 14.17 10.33 13 8 13ZM16 13C15.71 13 15.38 13.02 15.03 13.05C16.19 13.89 17 15.02 17 16.5V19H23V16.5C23 14.17 18.33 13 16 13Z"/></svg>
+                <span>1. Solicitudes de Usuarios</span>
+              </button>
+              <button class="admin-nav-tab" id="tabAdminModulesBtn" onclick="AppCore.switchAdminTab('modules')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM9 17H7V10H9V17ZM13 17H11V7H13V17ZM17 17H15V13H17V17Z"/></svg>
+                <span>2. Gestión de Módulos</span>
+              </button>
+              <button class="admin-nav-tab" id="tabAdminLogosBtn" onclick="AppCore.switchAdminTab('logos')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z"/></svg>
+                <span>3. Gestor de Logos y Multimedia</span>
+              </button>
+            </div>
+
+            <!-- CONTENIDO PESTAÑA 1: SOLICITUDES DE USUARIOS -->
+            <div id="adminTabUsersContent">
+              <div class="glass-card" style="padding:0; overflow:hidden;">
+                <div class="table-responsive">
+                  <table class="admin-table">
+                    <thead>
+                      <tr><th>ID</th><th>Usuario</th><th>Correo</th><th>Estado</th><th style="text-align:right;">Acciones Administrativas</th></tr>
+                    </thead>
+                    <tbody id="adminUsersTbody">
+                      <tr><td colspan="5" style="text-align:center; padding:30px;">Cargando usuarios desde Google Sheets...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- CONTENIDO PESTAÑA 2: GESTIÓN DE MÓDULOS -->
+            <div id="adminTabModulesContent" style="display:none;">
+              <div id="adminModulesList" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:20px;"></div>
+            </div>
+
+            <!-- CONTENIDO PESTAÑA 3: GESTOR DE LOGOS Y MULTIMEDIA -->
+            <div id="adminTabLogosContent" style="display:none;">
+              <div class="glass-card" style="padding:26px;">
+                <h3 style="font-size:1.15rem; font-weight:800; margin-bottom:12px;">Subida de Logo a Google Drive</h3>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:20px;">
+                  Las imágenes seleccionadas se almacenan automáticamente en la carpeta oficial <strong>Logos_Comunas_Maturin</strong> de su Google Drive.
+                </p>
+
+                <div class="logo-uploader-box" onclick="document.getElementById('logoFileInput').click()">
+                  <input type="file" id="logoFileInput" accept="image/*" style="display:none;" onchange="AppCore.handleLogoSelected(this)">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="var(--color-yellow)" style="margin-bottom:10px;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4C9.11 4 6.6 5.64 5.35 8.04C2.34 8.36 0 10.91 0 14C0 17.31 2.69 20 6 20H19C21.76 20 24 17.76 24 15C24 12.36 21.95 10.22 19.35 10.04ZM14 13V17H10V13H7L12 8L17 13H14Z"/></svg>
+                  <div style="font-weight:700; font-size:0.95rem; margin-bottom:4px;" id="uploadBoxLabel">Haga clic o arrastre aquí su imagen de logo institucional</div>
+                  <div style="font-size:0.75rem; color:var(--text-dim);">Formatos admitidos: PNG, JPG, WEBP, SVG</div>
+                </div>
+
+                <div id="logoUploadActionBox" style="display:none; margin-top:16px; align-items:center; gap:14px;">
+                  <img id="logoUploadPreview" style="width:60px; height:60px; object-fit:contain; border-radius:8px; border:1px solid var(--border-subtle);">
+                  <button type="button" class="action-btn-sm action-btn-approve" onclick="AppCore.uploadLogoToDrive()">
+                    Confirmar Subida a Drive
+                  </button>
+                </div>
+
+                <h3 style="font-size:1.1rem; font-weight:800; margin:32px 0 14px;">Logos Registrados en Servidor</h3>
+                <div class="logos-gallery-grid" id="logosGalleryGrid">
+                  <div style="color:var(--text-dim); font-size:0.85rem;">Cargando catálogo multimedia...</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        `;
+
         loadAdminUsers();
-        openModal('modalAdminPanel');
       }
 
       function switchAdminTab(t) {
-        const u = document.getElementById('adminTabUsers');
-        const m = document.getElementById('adminTabModules');
-        const bU = document.getElementById('tabUsersBtn');
-        const bM = document.getElementById('tabModulesBtn');
+        const u = document.getElementById('adminTabUsersContent');
+        const m = document.getElementById('adminTabModulesContent');
+        const l = document.getElementById('adminTabLogosContent');
+
+        const bU = document.getElementById('tabAdminUsersBtn');
+        const bM = document.getElementById('tabAdminModulesBtn');
+        const bL = document.getElementById('tabAdminLogosBtn');
+
+        bU.classList.remove('active');
+        bM.classList.remove('active');
+        bL.classList.remove('active');
+
+        u.style.display = 'none';
+        m.style.display = 'none';
+        l.style.display = 'none';
+
         if (t === 'users') {
           u.style.display = 'block';
-          m.style.display = 'none';
           bU.classList.add('active');
-          bM.classList.remove('active');
           loadAdminUsers();
-        } else {
-          u.style.display = 'none';
+        } else if (t === 'modules') {
           m.style.display = 'block';
           bM.classList.add('active');
-          bU.classList.remove('active');
-          renderAdminModules();
+          loadAdminModules();
+        } else if (t === 'logos') {
+          l.style.display = 'block';
+          bL.classList.add('active');
+          loadAdminLogos();
         }
       }
 
+      // ==========================================================================
+      // PESTAÑA 1: ACCIONES DINÁMICAS DE USUARIOS (APROBAR, SUSPENDER, HABILITAR, RECHAZAR)
+      // ==========================================================================
       async function loadAdminUsers() {
         const tbody = document.getElementById('adminUsersTbody');
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Cargando usuarios desde hoja Usuarios...</td></tr>`;
+        if (!tbody) return;
 
         try {
           const res = await postBackend({
             accion: "admin_accion",
             subaction: "obtener_usuarios",
-            pin_maestro: document.getElementById('inputMasterPin').value.trim()
+            pin_maestro: state.cachedMasterPin
           });
 
           if (res.ok && res.usuarios) {
-            tbody.innerHTML = res.usuarios.map(u => `
-              <tr>
-                <td><strong>${u.id}</strong></td>
-                <td>${u.usuario}</td>
-                <td>${u.correo}</td>
-                <td><span class="status-badge ${u.estado.toLowerCase()}">${u.estado}</span></td>
-                <td style="text-align:right;">
-                  ${u.estado === 'PENDIENTE' ? `
-                    <button class="action-btn-sm action-btn-approve" onclick="AppCore.changeUserStatus('${u.usuario}', 'ACTIVO')">Aprobar</button>
-                    <button class="action-btn-sm action-btn-reject" onclick="AppCore.changeUserStatus('${u.usuario}', 'RECHAZAR')">Rechazar</button>
-                  ` : `
-                    <button class="action-btn-sm action-btn-reject" onclick="AppCore.changeUserStatus('${u.usuario}', 'SUSPENDIDO')">Suspender</button>
-                  `}
-                </td>
-              </tr>
-            `).join("");
+            tbody.innerHTML = res.usuarios.map(u => {
+              const est = u.estado.toUpperCase();
+              let actionButtons = '';
+
+              if (est === 'PENDIENTE') {
+                actionButtons = `
+                  <button class="action-btn-sm action-btn-approve" onclick="AppCore.changeUserStatus('${u.usuario}', 'ACTIVO')">
+                    ✓ Aprobar
+                  </button>
+                  <button class="action-btn-sm action-btn-reject" onclick="AppCore.changeUserStatus('${u.usuario}', 'RECHAZAR')">
+                    ✕ Rechazar
+                  </button>
+                `;
+              } else if (est === 'ACTIVO') {
+                actionButtons = `
+                  <button class="action-btn-sm action-btn-suspend" onclick="AppCore.changeUserStatus('${u.usuario}', 'SUSPENDIDO')">
+                    ⏸ Suspender
+                  </button>
+                `;
+              } else if (est === 'SUSPENDIDO') {
+                actionButtons = `
+                  <button class="action-btn-sm action-btn-approve" onclick="AppCore.changeUserStatus('${u.usuario}', 'HABILITAR')">
+                    ▶ Habilitar
+                  </button>
+                  <button class="action-btn-sm action-btn-reject" onclick="AppCore.changeUserStatus('${u.usuario}', 'RECHAZAR')">
+                    ✕ Eliminar
+                  </button>
+                `;
+              }
+
+              return `
+                <tr id="row_usr_${u.usuario}">
+                  <td><strong style="color:var(--color-yellow); font-family:monospace;">${u.id}</strong></td>
+                  <td><strong>${u.usuario}</strong></td>
+                  <td>${u.correo}</td>
+                  <td><span class="status-badge ${est.toLowerCase()}" id="badge_usr_${u.usuario}">${est}</span></td>
+                  <td style="text-align:right;">${actionButtons}</td>
+                </tr>
+              `;
+            }).join("");
           }
         } catch (e) {
-          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Configure la URL del Apps Script para listar usuarios en vivo.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">${e.message}</td></tr>`;
         }
       }
 
       async function changeUserStatus(usuario, nuevoEstado) {
-        showLoading(`Actualizando a ${nuevoEstado}...`);
+        showLoading(`Actualizando a ${nuevoEstado} en Google Sheets...`);
         try {
-          await postBackend({
+          const res = await postBackend({
             accion: "admin_accion",
             subaction: "cambiar_estado_usuario",
-            pin_maestro: document.getElementById('inputMasterPin').value.trim(),
+            pin_maestro: state.cachedMasterPin,
             usuario: usuario,
             nuevo_estado: nuevoEstado
           });
           hideLoading();
-          loadAdminUsers();
-          showToast(`Usuario ${usuario} actualizado.`);
+
+          if (res.ok) {
+            showToast(res.msg);
+            loadAdminUsers();
+          } else {
+            alert(res.msg || "Error al actualizar estado.");
+          }
         } catch (err) {
           hideLoading();
           alert(err.message);
         }
       }
 
-      function renderAdminModules() {
+      // ==========================================================================
+      // PESTAÑA 2: GESTIÓN DE MÓDULOS (SELECTORES OSCUROS & FECHA ANIMADA)
+      // ==========================================================================
+      async function loadAdminModules() {
         const cont = document.getElementById('adminModulesList');
-        cont.innerHTML = state.modules.map(m => `
-          <div style="background:var(--surface-glass-input); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px; margin-bottom:14px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-              <strong>${m.nombre} (${m.id})</strong>
-              <span class="status-badge ${m.estado.toLowerCase()}">${m.estado}</span>
-            </div>
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; align-items:flex-end;">
-              <div>
-                <label class="form-label">Estado:</label>
-                <select class="form-input" style="padding:6px 10px;" onchange="AppCore.updateModuleState('${m.id}', this.value)">
-                  <option value="ACTIVO" ${m.estado === 'ACTIVO' ? 'selected' : ''}>ACTIVO</option>
-                  <option value="BLOQUEADO" ${m.estado === 'BLOQUEADO' ? 'selected' : ''}>BLOQUEADO</option>
-                  <option value="FECHA" ${m.estado === 'FECHA' ? 'selected' : ''}>FECHA</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        `).join("");
+        if (!cont) return;
+        cont.innerHTML = `<div style="color:var(--text-dim);">Cargando configuración de módulos...</div>`;
+
+        try {
+          const res = await postBackend({
+            accion: "admin_accion",
+            subaction: "obtener_modulos_admin",
+            pin_maestro: state.cachedMasterPin
+          });
+
+          if (res.ok && res.modulos) {
+            renderAdminModulesList(res.modulos);
+          }
+        } catch (e) {
+          renderAdminModulesList(state.modules);
+        }
       }
 
-      async function updateModuleState(id, estado) {
-        showLoading("Actualizando directiva en Apps Script...");
+      function renderAdminModulesList(mods) {
+        const cont = document.getElementById('adminModulesList');
+        if (!cont) return;
+
+        cont.innerHTML = mods.map(m => {
+          const isFecha = (m.estado === 'FECHA');
+          const fechaVal = m.fecha_apertura ? m.fecha_apertura.substring(0, 16) : "";
+
+          return `
+            <div class="glass-card" style="padding:22px; display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                  <h4 style="font-size:1.05rem; font-weight:800;">${m.nombre}</h4>
+                  <span class="status-badge ${m.estado.toLowerCase()}" id="mod_badge_${m.id}">${m.estado}</span>
+                </div>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:16px;">${m.descripcion || ''}</p>
+
+                <!-- SELECTOR ESTILIZADO EN DARK MODE -->
+                <div class="form-group">
+                  <label class="form-label">Estado Operativo:</label>
+                  <select class="form-input" id="mod_sel_est_${m.id}" onchange="AppCore.handleModuleStateSelectChange('${m.id}', this.value)">
+                    <option value="ACTIVO" ${m.estado === 'ACTIVO' ? 'selected' : ''}>🟢 ACTIVO (Disponible)</option>
+                    <option value="BLOQUEADO" ${m.estado === 'BLOQUEADO' ? 'selected' : ''}>🔴 BLOQUEADO (Inhabilitado)</option>
+                    <option value="FECHA" ${m.estado === 'FECHA' ? 'selected' : ''}>🟡 FECHA (Cuenta Regresiva)</option>
+                  </select>
+                </div>
+
+                <!-- CAMPO CONDICIONAL DE FECHA Y HORA (ANIMADO) -->
+                <div class="fecha-input-wrap ${isFecha ? 'visible' : ''}" id="wrap_fecha_${m.id}">
+                  <label class="form-label" style="color:var(--color-yellow);">Fecha y Hora de Apertura Automática:</label>
+                  <input type="datetime-local" class="form-input" id="mod_inp_fecha_${m.id}" value="${fechaVal}">
+                </div>
+
+                <div class="form-group" style="margin-top:14px;">
+                  <label class="form-label">PIN Secundario (Opcional):</label>
+                  <input type="password" class="form-input" id="mod_inp_pin_${m.id}" value="${m.pin_acceso || ''}" placeholder="Sin PIN (Libre)" maxlength="6">
+                </div>
+              </div>
+
+              <button type="button" class="action-btn-sm action-btn-approve" style="width:100%; justify-content:center; padding:11px;" onclick="AppCore.saveModuleConfig('${m.id}')">
+                Guardar Configuración en Sheet
+              </button>
+            </div>
+          `;
+        }).join("");
+      }
+
+      function handleModuleStateSelectChange(modId, estado) {
+        const wrapFecha = document.getElementById(`wrap_fecha_${modId}`);
+        if (!wrapFecha) return;
+        if (estado === 'FECHA') {
+          wrapFecha.classList.add('visible');
+        } else {
+          wrapFecha.classList.remove('visible');
+        }
+      }
+
+      async function saveModuleConfig(modId) {
+        const est = document.getElementById(`mod_sel_est_${modId}`).value;
+        const fechaVal = document.getElementById(`mod_inp_fecha_${modId}`).value;
+        const pinVal = document.getElementById(`mod_inp_pin_${modId}`).value.trim();
+
+        showLoading("Sincronizando estado y fecha en Google Sheets...");
         try {
-          await postBackend({
+          const res = await postBackend({
             accion: "admin_accion",
             subaction: "actualizar_modulo",
-            pin_maestro: document.getElementById('inputMasterPin').value.trim(),
-            id: id,
-            estado: estado
+            pin_maestro: state.cachedMasterPin,
+            id: modId,
+            estado: est,
+            fecha_apertura: (est === 'FECHA' && fechaVal) ? new Date(fechaVal).toISOString() : "",
+            pin_acceso: pinVal
           });
           hideLoading();
-          const mod = state.modules.find(x => x.id === id);
-          if (mod) mod.estado = estado;
-          showToast(`Módulo ${id} configurado.`);
+
+          if (res.ok) {
+            showToast(`Módulo ${modId} actualizado.`);
+            loadAdminModules();
+          } else {
+            alert(res.msg || "Error al actualizar módulo.");
+          }
+        } catch (err) {
+          hideLoading();
+          alert(err.message);
+        }
+      }
+
+      // ==========================================================================
+      // PESTAÑA 3: GESTOR DE LOGOS Y MULTIMEDIA (GOOGLE DRIVE)
+      // ==========================================================================
+      let selectedFileBase64 = null;
+      let selectedFileName = "";
+      let selectedFileMime = "";
+
+      function handleLogoSelected(input) {
+        if (!input.files || input.files.length === 0) return;
+        const file = input.files[0];
+        selectedFileName = file.name;
+        selectedFileMime = file.type || "image/png";
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          selectedFileBase64 = e.target.result;
+          const box = document.getElementById('logoUploadActionBox');
+          const preview = document.getElementById('logoUploadPreview');
+          const label = document.getElementById('uploadBoxLabel');
+
+          preview.src = selectedFileBase64;
+          box.style.display = 'flex';
+          label.innerText = `Archivo listo: ${file.name}`;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      async function uploadLogoToDrive() {
+        if (!selectedFileBase64) return;
+
+        showLoading("Subiendo imagen a Google Drive (Logos_Comunas_Maturin)...");
+        try {
+          const res = await postBackend({
+            accion: "admin_accion",
+            subaction: "subir_logo",
+            pin_maestro: state.cachedMasterPin,
+            base64: selectedFileBase64,
+            nombre_archivo: selectedFileName,
+            tipo_mime: selectedFileMime
+          });
+          hideLoading();
+
+          if (res.ok) {
+            showToast(res.msg);
+            document.getElementById('logoUploadActionBox').style.display = 'none';
+            document.getElementById('uploadBoxLabel').innerText = "Haga clic o arrastre aquí su imagen de logo institucional";
+            if (res.active_logo_url) {
+              state.activeLogoUrl = res.active_logo_url;
+              localStorage.setItem('inst_active_logo', res.active_logo_url);
+              updateLogoDisplay();
+            }
+            loadAdminLogos();
+          } else {
+            alert(res.msg || "Error al subir a Google Drive.");
+          }
+        } catch (err) {
+          hideLoading();
+          alert(err.message);
+        }
+      }
+
+      async function loadAdminLogos() {
+        const grid = document.getElementById('logosGalleryGrid');
+        if (!grid) return;
+
+        try {
+          const res = await postBackend({
+            accion: "admin_accion",
+            subaction: "obtener_logos",
+            pin_maestro: state.cachedMasterPin
+          });
+
+          if (res.ok && res.logos) {
+            if (res.logos.length === 0) {
+              grid.innerHTML = `<div style="color:var(--text-dim); font-size:0.85rem;">No hay imágenes cargadas en Drive aún.</div>`;
+              return;
+            }
+
+            grid.innerHTML = res.logos.map(l => {
+              const isActive = (state.activeLogoUrl === l.url);
+              return `
+                <div class="logo-gallery-card ${isActive ? 'active-logo' : ''}">
+                  <img src="${l.url}" class="logo-thumb-preview" alt="${l.nombre}">
+                  <strong style="font-size:0.8rem; word-break:break-all;">${l.nombre}</strong>
+                  <span style="font-size:0.7rem; color:var(--text-dim);">${new Date(l.fecha).toLocaleDateString()}</span>
+                  ${isActive ? `
+                    <span class="status-badge activo" style="width:100%; justify-content:center;">Logo Principal</span>
+                  ` : `
+                    <button class="action-btn-sm action-btn-approve" style="width:100%; justify-content:center;" onclick="AppCore.setActiveLogo('${l.url}')">
+                      Asignar como Principal
+                    </button>
+                  `}
+                </div>
+              `;
+            }).join("");
+          }
+        } catch (e) {
+          grid.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem;">Conéctese a Google Apps Script para gestionar Drive.</div>`;
+        }
+      }
+
+      async function setActiveLogo(logoUrl) {
+        showLoading("Asignando logo principal en Google Sheets...");
+        try {
+          const res = await postBackend({
+            accion: "admin_accion",
+            subaction: "asignar_logo_activo",
+            pin_maestro: state.cachedMasterPin,
+            logo_url: logoUrl
+          });
+          hideLoading();
+
+          if (res.ok) {
+            state.activeLogoUrl = logoUrl;
+            localStorage.setItem('inst_active_logo', logoUrl);
+            updateLogoDisplay();
+            showToast("Logo principal actualizado.");
+            loadAdminLogos();
+          }
         } catch (err) {
           hideLoading();
           alert(err.message);
@@ -1339,26 +2018,14 @@
         const u = document.getElementById('inputBackendUrl').value.trim();
         state.apiUrl = u;
         localStorage.setItem('INST_API_URL', u);
-        updateBackendStatusBadge();
-        showToast("URL de Google Apps Script guardada.", "success");
-      }
-
-      function updateBackendStatusBadge() {
-        const b = document.getElementById('backendStatusTag');
-        if (!b) return;
-        if (state.apiUrl && state.apiUrl.startsWith('http')) {
-          b.innerText = "Conectado a Apps Script";
-          b.className = "status-badge activo";
-        } else {
-          b.innerText = "Falta Configurar URL";
-          b.className = "status-badge fecha";
-        }
+        showToast("URL de Google Apps Script actualizada.", "success");
       }
 
       function handleLogout() {
         if (confirm("¿Cerrar sesión institucional?")) {
           state.currentUser = null;
           state.masterPinValidated = false;
+          state.cachedMasterPin = "";
           localStorage.removeItem('inst_auth_user');
           showAuthView();
         }
@@ -1390,7 +2057,11 @@
         saveBackendUrl,
         switchAdminTab,
         changeUserStatus,
-        updateModuleState,
+        handleModuleStateSelectChange,
+        saveModuleConfig,
+        handleLogoSelected,
+        uploadLogoToDrive,
+        setActiveLogo,
         updateRecord,
         showLoading,
         hideLoading,
