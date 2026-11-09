@@ -162,7 +162,8 @@
       gap: 14px;
       text-decoration: none;
       color: inherit;
-      cursor: pointer;
+      cursor: default;
+      user-select: none;
     }
 
     /* Espacio contenedor para logo con animación suave de pulso/desvanecimiento */
@@ -181,9 +182,7 @@
       transition: transform 0.3s ease;
     }
 
-    .brand-container:hover .logo-institution-wrap {
-      transform: scale(1.05);
-    }
+
 
     .logo-institution-wrap img {
       width: 100%;
@@ -822,7 +821,8 @@
        ========================================================================== -->
   <header class="topbar">
     <div class="topbar-content">
-      <div class="brand-container" onclick="window.AppCore.showDashboardMenu()" title="Ir al Menú Principal">
+      <!-- Identidad Institucional Fija (Sin acción de clic para máxima seguridad) -->
+      <div class="brand-container">
         
         <!-- Espacio para Logo Institucional con animación de pulso suave -->
         <div class="logo-institution-wrap" id="navbarLogoContainer">
@@ -927,7 +927,7 @@
         </svg>
       </div>
       <span style="font-size:0.88rem; font-weight:700; color:var(--text-muted);" id="loadingMsg">
-        Validando con Google  Script...
+        Validando con Google Apps Script...
       </span>
     </div>
   </div>
@@ -943,6 +943,7 @@
        LÓGICA DEL CASCARÓN PRINCIPAL
        ========================================================================== -->
   <script>
+    // URL OFICIAL DE GOOGLE APPS SCRIPT
     const API_URL = localStorage.getItem('INST_API_URL') || "https://script.google.com/macros/s/AKfycbz81PMA6uv0xf3-0vFdli9gGcPGxmarFjmVvcsAs7ipltV54iZlKzuOLF5mEGW2v2Lz/exec";
 
     window.AppCore = (function () {
@@ -1265,6 +1266,12 @@
       // MENÚ PRINCIPAL (CON SKELETONS Y PREVENCIÓN DE PANTALLA CONGELADA)
       // ==========================================================================
       async function showDashboardMenu() {
+        // SEGURIDAD ESTRICTA: Bloqueo absoluto si no hay sesión autenticada activa
+        if (!state.currentUser || state.currentUser.estado !== "ACTIVO") {
+          showAuthView();
+          return;
+        }
+
         if (state.activeModule && state.activeModule.unmount) {
           state.activeModule.unmount();
           state.activeModule = null;
