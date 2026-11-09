@@ -102,6 +102,7 @@ window.MonitorOBPP = (function () {
       #obpp-monitor-scope .obpp-orb-3 { width: 400px; height: 400px; background: radial-gradient(circle, #ef4444 0%, #991b1b 100%); bottom: -5%; left: 20%; }
 
       /* Loader Interno */
+      #obppLoader,
       #obpp-loader {
         position: absolute;
         inset: 0;
@@ -115,6 +116,7 @@ window.MonitorOBPP = (function () {
         z-index: 1000;
         transition: opacity 0.35s ease;
       }
+      #obppLoader.fade-out,
       #obpp-loader.fade-out {
         opacity: 0;
         pointer-events: none;
@@ -514,7 +516,7 @@ window.MonitorOBPP = (function () {
         </div>
 
         <!-- Loader Interno -->
-        <div id="obpp-loader">
+        <div id="obppLoader">
           <div class="obpp-ring-wrap">
             <div class="obpp-ring obpp-ring-1"></div>
             <div class="obpp-ring obpp-ring-2"></div>
@@ -871,9 +873,10 @@ window.MonitorOBPP = (function () {
     if (loader) {
       loader.classList.remove('fade-out');
       loader.style.display = 'flex';
+      loader.style.opacity = '1';
     }
 
-    let progreso = 20;
+    let progreso = 15;
     const fill = document.getElementById('obppProgressBarFill');
     const text = document.getElementById('obppProgressPercentage');
     if (fill) fill.style.width = progreso + '%';
@@ -881,33 +884,50 @@ window.MonitorOBPP = (function () {
 
     if (loaderInterval) clearInterval(loaderInterval);
     loaderInterval = setInterval(() => {
-      if (progreso < 92) {
-        progreso += Math.floor(Math.random() * 8) + 4;
-        if (progreso > 92) progreso = 92;
+      // Sube automáticamente hasta un máximo temporal (85-88%) mientras espera la respuesta
+      if (progreso < 88) {
+        progreso += Math.floor(Math.random() * 6) + 3;
+        if (progreso > 88) progreso = 88;
         if (fill) fill.style.width = progreso + '%';
         if (text) text.innerText = progreso + '%';
       }
-    }, 140);
+    }, 120);
   }
 
-  function ocultarLoader() {
-    if (loaderInterval) clearInterval(loaderInterval);
+  function ocultarLoader(isSuccess = true, errorMsg = "") {
+    if (loaderInterval) {
+      clearInterval(loaderInterval);
+      loaderInterval = null;
+    }
+    const loader = document.getElementById('obppLoader');
     const fill = document.getElementById('obppProgressBarFill');
     const text = document.getElementById('obppProgressPercentage');
-    if (fill) fill.style.width = '100%';
-    if (text) text.innerText = '100%';
 
-    setTimeout(() => {
-      const loader = document.getElementById('obppLoader');
+    if (isSuccess) {
+      // Salta de inmediato al 100% y desvanece suavemente el telón
+      if (fill) fill.style.width = '100%';
+      if (text) text.innerText = '100%';
+
+      setTimeout(() => {
+        if (loader) {
+          loader.classList.add('fade-out');
+          setTimeout(() => { loader.style.display = 'none'; }, 250);
+        }
+      }, 200);
+    } else {
+      // Detiene la animación de inmediato, quita el telón y muestra toast de alerta
       if (loader) {
         loader.classList.add('fade-out');
-        setTimeout(() => { loader.style.display = 'none'; }, 400);
+        loader.style.display = 'none';
       }
-    }, 400);
+      if (errorMsg && window.AppCore && typeof window.AppCore.showToast === 'function') {
+        window.AppCore.showToast(errorMsg, "danger");
+      }
+    }
   }
 
   /**
-   * Carga de datos desde el Servidor Central
+   * Carga de datos desde el Servidor Central con manejo resiliente
    */
   async function cargarDatosServidor() {
     mostrarLoader('Cargando la Matriz', 'Sincronizando registros OBPP Monagas...');
@@ -915,8 +935,16 @@ window.MonitorOBPP = (function () {
       if (window.AppCore && window.AppCore.API_URL && window.AppCore.API_URL.startsWith('http')) {
         const resp = await fetch(`${window.AppCore.API_URL}?data=obpp`);
         const res = await resp.json();
-        ocultarLoader();
-        if (res.ok && res.registros) {
+
+        // Si el backend responde con error estructurado
+        if (res && res.status === 'error') {
+          const errDetalle = res.mensaje || res.error || "No se pudo leer el documento central.";
+          ocultarLoader(false, "Servidor Central: " + errDetalle);
+          return;
+        }
+
+        if (res && (res.status === 'ok' || res.ok) && res.registros) {
+          ocultarLoader(true);
           baseDatos = res.registros;
           const sub = document.getElementById('obppInfoSubtitulo');
           if (sub) sub.innerText = `Registros Consolidados: ${res.totalRegistros || baseDatos.length}`;
@@ -927,10 +955,12 @@ window.MonitorOBPP = (function () {
       }
     } catch (e) {
       console.warn("[MonitorOBPP] Falla conectando al backend central:", e);
+      ocultarLoader(false, "Error de sincronización con el Servidor Central: " + e.message);
+      return;
     }
 
-    ocultarLoader();
-    // Datos de contingencia local institucional
+    ocultarLoader(true);
+    // Datos de contingencia local institucional si la base de datos está vacía
     if (baseDatos.length === 0) {
       baseDatos = [
         { filaSheet: 2, num: "1", estado: "EDO. MONAGAS", municipio: "MATURIN", parroquia: "SAN SIMON", siturAnt: "SIT-01", siturAct: "01-14-01-001-0001", consejo: "CONSEJO COMUNAL CASCO CENTRAL", fechaReg: "2023-01-15", fechaVenc: "2025-01-15", estatusSinco: "REGISTRADA", dias: -650, diasTexto: "-650 días", condicion: "VOCERIA POR RENOVAR", renovado: "", condicionBase: "ALTA", prioridad: "ALTA", comuna: "COMUNA CORAZON DE JESUS" },
