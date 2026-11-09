@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#07070c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Sistema Central de Gestión y Monitoreo Institucional</title>
+
+  <style>
+    /* ==========================================================================
+       VARIABLES CSS & SISTEMA DE DISEÑO TRICOLOR + GLASSMORFISM
+       ========================================================================== */
+    :root {
+      --color-yellow: #FFCC00;
+      --color-yellow-glow: rgba(255, 204, 0, 0.45);
+      --color-blue: #0066FF;
+      --color-blue-deep: #00247D;
+      --color-blue-glow: rgba(0, 102, 255, 0.45);
+      --color-red: #FF2E4D;
+      --color-red-deep: #CF142B;
+      --color-red-glow: rgba(255, 46, 77, 0.45);
+
+      --gradient-tricolor: linear-gradient(135deg, #FFCC00 0%, #0066FF 50%, #CF142B 100%);
+      --gradient-tricolor-horizontal: linear-gradient(90deg, #FFCC00 0%, #0066FF 50%, #CF142B 100%);
+
+      /* Modo Oscuro Profundo (Por Defecto) */
+      --bg-body: #07070c;
+      --bg-body-secondary: #0b0e14;
+      --surface-glass: rgba(15, 19, 29, 0.75);
+      --surface-glass-card: rgba(18, 24, 38, 0.68);
+      --surface-glass-modal: rgba(11, 14, 20, 0.94);
+      --surface-glass-input: rgba(255, 255, 255, 0.05);
+      --border-subtle: rgba(255, 255, 255, 0.09);
+      --border-card-hover: rgba(255, 204, 0, 0.4);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --shadow-ambient: 0 12px 40px rgba(0, 0, 0, 0.65);
+      --blur-val: 18px;
+
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --transition-standard: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+    }
+
+    [data-theme="light"] {
+      --bg-body: #f8fafc;
+      --bg-body-secondary: #f1f5f9;
+      --surface-glass: rgba(255, 255, 255, 0.88);
+      --surface-glass-card: rgba(255, 255, 255, 0.85);
+      --surface-glass-modal: rgba(255, 255, 255, 0.96);
+      --surface-glass-input: rgba(0, 0, 0, 0.04);
+      --border-subtle: rgba(0, 36, 125, 0.12);
+      --border-card-hover: rgba(0, 102, 255, 0.4);
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #64748b;
+      --shadow-ambient: 0 12px 35px rgba(0, 36, 125, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.35s ease, color 0.35s ease;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: -20vh;
+      left: -20vw;
+      width: 140vw;
+      height: 140vh;
+      background: 
+        radial-gradient(circle at 15% 20%, rgba(255, 204, 0, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 85% 30%, rgba(0, 102, 255, 0.07) 0%, transparent 45%),
+        radial-gradient(circle at 50% 85%, rgba(207, 20, 43, 0.05) 0%, transparent 40%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      width: 100%;
+      backdrop-filter: blur(var(--blur-val));
+      -webkit-backdrop-filter: blur(var(--blur-val));
+      background: var(--surface-glass);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .topbar::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient-tricolor-horizontal);
+    }
+
+    .topbar-content {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .emblem-svg-wrap {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 0 8px rgba(255, 204, 0, 0.3));
+    }
+
+    .brand-titles { display: flex; flex-direction: column; }
+    .brand-tag {
+      font-size: 0.68rem;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      font-weight: 800;
+      background: var(--gradient-tricolor-horizontal);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      line-height: 1.2;
+    }
+
+    .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+    .icon-btn {
+      background: var(--surface-glass-input);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition-standard);
+    }
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--color-yellow);
+      transform: translateY(-2px);
+    }
+    .icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
+    .icon-btn.settings-btn:hover svg { transform: rotate(90deg); transition: transform 0.4s ease; }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--surface-glass-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .status-dot-active {
+      width: 8px;
+      height: 8px;
+      background-color: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10b981;
+    }
+
+    /* CONTENEDOR CENTRAL MODULAR */
+    #app-viewport {
+      flex: 1;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 28px 20px 60px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* COMPONENTES */
+    .glass-card {
+      background: var(--surface-glass-card);
+      backdrop-filter: blur(var(--blur-val));
+      -webkit-backdrop-filter: blur(var(--blur-val));
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-ambient);
+      transition: var(--transition-standard);
+      position: relative;
+    }
+
+    .btn-tricolor {
+      width: 100%;
+      background: var(--gradient-tricolor);
+      background-size: 200% 200%;
+      border: none;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.5px;
+      padding: 13px 20px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: var(--transition-standard);
+      box-shadow: 0 8px 24px rgba(0, 102, 255, 0.35);
+    }
+    .btn-tricolor:hover {
+      background-position: right center;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(255, 46, 77, 0.35);
+    }
+    .btn-tricolor:active { transform: scale(0.98); }
+
+    .form-group { margin-bottom: 18px; text-align: left; }
+    .form-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-input {
+      width: 100%;
+      background: var(--surface-glass-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      outline: none;
+      transition: var(--transition-standard);
+      font-family: inherit;
+    }
+    .form-input:focus {
+      border-color: var(--color-blue);
+      box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.2);
+    }
+
+    .table-responsive { width: 100%; overflow-x: auto; }
+    .admin-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+    .admin-table th {
+      background: var(--surface-glass-input);
+      padding: 14px 16px;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.6px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .admin-table td { padding: 14px 16px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
+    .admin-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+    .action-btn-sm {
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: var(--transition-standard);
+    }
+    .action-btn-approve { background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; }
+    .action-btn-approve:hover { background: #10b981; color: #fff; }
+    .action-btn-reject { background: rgba(255, 46, 77, 0.2); border: 1px solid rgba(255, 46, 77, 0.4); color: #f87171; }
+    .action-btn-reject:hover { background: var(--color-red); color: #fff; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      border-radius: var(--radius-full);
+    }
+    .status-badge.activo { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; }
+    .status-badge.bloqueado { background: rgba(255, 46, 77, 0.12); border: 1px solid rgba(255, 46, 77, 0.35); color: var(--color-red); }
+    .status-badge.fecha { background: rgba(255, 204, 0, 0.15); border: 1px solid rgba(255, 204, 0, 0.45); color: var(--color-yellow); }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(7, 7, 12, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-backdrop.open { opacity: 1; pointer-events: all; }
+    .modal-container {
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: var(--surface-glass-modal);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: var(--shadow-ambient);
+      transform: scale(0.95);
+      transition: transform 0.3s ease;
+    }
+    .modal-backdrop.open .modal-container { transform: scale(1); }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .modal-title { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+    .modal-close-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5rem; line-height: 1; }
+
+    /* LOADER TRICOLOR 3 ARCOS */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(7, 7, 12, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .loading-overlay.active { opacity: 1; pointer-events: all; }
+    .tricolor-spinner { width: 70px; height: 70px; position: relative; }
+    .spinner-arc-yellow {
+      stroke: var(--color-yellow);
+      stroke-dasharray: 60 140;
+      stroke-linecap: round;
+      transform-origin: center;
+      animation: rotClockwise 1.6s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    }
+    .spinner-arc-blue {
+      stroke: var(--color-blue);
+      stroke-dasharray: 45 100;
+      stroke-linecap: round;
+      transform-origin: center;
+      animation: rotCounter 1.1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    }
+    .spinner-arc-red {
+      stroke: var(--color-red);
+      stroke-dasharray: 30 70;
+      stroke-linecap: round;
+      transform-origin: center;
+      animation: rotClockwise 2.1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    }
+    @keyframes rotClockwise { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes rotCounter { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }
+
+    /* TOAST */
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
+    .toast-item {
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(12px);
+      animation: slideIn 0.3s ease;
+    }
+    .toast-item.success { background: rgba(16, 185, 129, 0.9); color: #fff; }
+    .toast-item.danger { background: rgba(239, 68, 68, 0.9); color: #fff; }
+    .toast-item.info { background: rgba(0, 102, 255, 0.9); color: #fff; }
+    @keyframes slideIn { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* GRID MENU */
+    .modules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+    .module-card { padding: 26px 24px; display: flex; flex-direction: column; justify-content: space-between; min-height: 280px; }
+    .module-icon-wrap {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      background: var(--surface-glass-input);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-yellow);
+    }
+    .module-icon-wrap svg { width: 26px; height: 26px; }
+
+    .module-btn {
+      width: 100%;
+      padding: 12px 18px;
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid var(--border-subtle);
+      background: var(--surface-glass-input);
+      color: var(--text-main);
+      transition: var(--transition-standard);
+    }
+    .module-card.state-activo:hover .module-btn { background: var(--gradient-tricolor); color: #fff; border-color: transparent; }
+    .module-card.state-bloqueado { opacity: 0.6; filter: grayscale(40%); }
+
+    .countdown-box {
+      margin: 12px 0 6px;
+      background: var(--surface-glass-input);
+      border: 1px solid rgba(255, 204, 0, 0.25);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+    }
+    .countdown-num { font-size: 1.15rem; font-weight: 800; color: var(--color-yellow); }
+    .countdown-lbl { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; }
+
+    .otp-container { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
+    .otp-input {
+      width: 48px;
+      height: 56px;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: var(--surface-glass-input);
+      border: 1.5px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--color-yellow);
+      outline: none;
+    }
+
+    .alert-banner {
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      line-height: 1.45;
+    }
+    .alert-banner.info { background: rgba(0, 102, 255, 0.12); border: 1px solid rgba(0, 102, 255, 0.3); color: #60a5fa; }
+    .alert-banner.success { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); color: #34d399; }
+    .alert-banner.warning { background: rgba(255, 204, 0, 0.12); border: 1px solid rgba(255, 204, 0, 0.4); color: #fde047; }
+    .alert-banner.danger { background: rgba(255, 46, 77, 0.12); border: 1px solid rgba(255, 46, 77, 0.4); color: #f87171; }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <!-- ==========================================================================
+       TOPBAR NAVEGACIÓN
+       ========================================================================== -->
+  <header class="topbar">
+    <div class="topbar-content">
+      <div class="brand-container" onclick="window.AppCore.showDashboardMenu()" title="Ir al Menú Central">
+        <div class="emblem-svg-wrap">
+          <svg viewBox="0 0 100 100" fill="none">
+            <defs>
+              <linearGradient id="shieldGrad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#FFCC00" />
+                <stop offset="50%" stop-color="#0066FF" />
+                <stop offset="100%" stop-color="#CF142B" />
+              </linearGradient>
+            </defs>
+            <path d="M50 8 L85 24 C85 62 50 92 50 92 C50 92 15 62 15 24 Z" stroke="url(#shieldGrad)" stroke-width="4" fill="rgba(7, 7, 12, 0.85)" />
+            <path d="M26 29 L74 29 C71 42 63 54 50 63 C37 54 29 42 26 29 Z" fill="#00247D" />
+            <path d="M23 27 L77 27 L73 19 L27 19 Z" fill="#FFCC00" />
+            <path d="M33 46 C37 54 44 59 50 63 C56 59 63 54 67 46 Z" fill="#CF142B" />
+            <circle cx="36" cy="34" r="1.6" fill="#FFFFFF" />
+            <circle cx="40" cy="31" r="1.6" fill="#FFFFFF" />
+            <circle cx="45" cy="30" r="1.6" fill="#FFFFFF" />
+            <circle cx="50" cy="29.5" r="1.8" fill="#FFFFFF" />
+            <circle cx="55" cy="30" r="1.6" fill="#FFFFFF" />
+            <circle cx="60" cy="31" r="1.6" fill="#FFFFFF" />
+            <circle cx="64" cy="34" r="1.6" fill="#FFFFFF" />
+            <circle cx="50" cy="35" r="1.6" fill="#FFFFFF" />
+            <circle cx="50" cy="48" r="4" stroke="#FFCC00" stroke-width="1.5" />
+            <circle cx="50" cy="48" r="1.5" fill="#FFCC00" />
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <span class="brand-tag">SISTEMA NACIONAL DE CONTROL</span>
+          <span class="brand-title">Gestión y Monitoreo Central</span>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="user-pill" id="userPill" style="display:none;">
+          <span class="status-dot-active"></span>
+          <span id="navUsername">operador</span>
+        </div>
+
+        <button class="icon-btn" id="btnThemeToggle" title="Alternar Modo Oscuro / Claro">
+          <svg id="iconSun" viewBox="0 0 24 24"><path d="M12 18C8.68629 18 6 15.3137 6 12C6 8.68629 8.68629 6 12 6C15.3137 6 18 8.68629 18 12C18 15.3137 15.3137 18 12 18ZM11 1H13V4H11V1ZM11 20H13V23H11V20ZM3.51 4.93L4.93 3.51L7.05 5.64L5.64 7.05L3.51 4.93ZM16.95 18.36L18.36 16.95L20.49 19.07L19.07 20.49L16.95 18.36ZM19.07 3.51L20.49 4.93L18.36 7.05L16.95 5.64L19.07 3.51ZM5.64 16.95L7.05 18.36L4.93 20.49L3.51 19.07L5.64 16.95ZM1 11H4V13H1V11ZM20 11H23V13H20V11Z"/></svg>
+          <svg id="iconMoon" style="display:none;" viewBox="0 0 24 24"><path d="M10 7C10 10.87 13.13 14 17 14C18.46 14 19.82 13.55 20.95 12.79C20.48 17.45 16.54 21 11.75 21C6.37 21 2 16.63 2 11.25C2 6.46 5.55 2.52 10.21 2.05C9.45 3.18 9 4.54 9 6C9 6.34 9.02 6.67 9.07 7H10ZM12 4.1C8.62 4.97 6 8.05 6 11.75C6 15.62 9.13 18.75 13 18.75C16.7 18.75 19.78 16.14 20.65 12.75C19.54 13.54 18.23 14 16.81 14C12.5 14 9 10.5 9 6.19C9 4.77 9.46 3.46 10.25 2.35C10.8 2.87 11.41 3.47 12 4.1Z"/></svg>
+        </button>
+
+        <button class="icon-btn settings-btn" id="btnOpenSettings" title="Configuración Maestra">
+          <svg viewBox="0 0 24 24"><path d="M12 1L14.39 3.39C14.77 3.77 15.29 3.99 15.83 3.99H17C18.1 3.99 19 4.89 19 6V7.17C19 7.71 19.22 8.23 19.61 8.61L22 11V13L19.61 15.39C19.22 15.77 19 16.29 19 16.83V18C19 19.1 18.1 20 17 20H15.83C15.29 20 14.77 20.22 14.39 20.61L12 23L9.61 20.61C9.23 20.22 8.71 20 8.17 20H7C5.9 20 5 19.1 5 18V16.83C5 16.29 4.78 15.77 4.39 15.39L2 13V11L4.39 8.61C4.78 8.23 5 7.71 5 7.17V6C5 4.89 5.9 3.99 7 3.99H8.17C8.71 3.99 9.23 3.77 9.61 3.39L12 1ZM12 9C10.34 9 9 10.34 9 12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12C15 10.34 13.66 9 12 9Z"/></svg>
+        </button>
+
+        <button class="icon-btn" id="btnLogout" style="display:none;" title="Cerrar Sesión">
+          <svg viewBox="0 0 24 24"><path d="M5 22C4.45 22 3.98 21.8 3.59 21.41C3.2 21.02 3 20.55 3 20V4C3 3.45 3.2 2.98 3.59 2.59C3.98 2.2 4.45 2 5 2H12V4H5V20H12V22H5ZM16 17L14.6 15.6L17.2 13H9V11H17.2L14.6 8.4L16 7L21 12L16 17Z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       CONTENEDOR CENTRAL: APP-VIEWPORT (MONTAJE MODULAR)
+       ========================================================================== -->
+  <main id="app-viewport"></main>
+
+  <!-- ==========================================================================
+       MODAL 1: DESAFÍO DE PIN MAESTRO (DELEGADO AL BACKEND)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="modalMasterPin">
+    <div class="modal-container" style="max-width: 400px; text-align: center;">
+      <div class="modal-header" style="justify-content: center;">
+        <h3 class="modal-title">Acceso de Administrador</h3>
+        <button class="modal-close-btn" onclick="AppCore.closeModal('modalMasterPin')">&times;</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+        Ingrese el <strong>PIN Maestro de Seguridad</strong> para verificar autorización en el servidor:
+      </p>
+      <div class="form-group">
+        <input type="password" id="inputMasterPin" class="form-input" style="text-align: center; font-size: 1.6rem; letter-spacing: 8px; color: var(--color-yellow);" placeholder="••••" maxlength="8">
+      </div>
+      <div id="masterPinAlert" class="alert-banner danger" style="display: none;"></div>
+      <button type="button" class="btn-tricolor" onclick="AppCore.verifyMasterPin()">
+        <span>Verificar en Servidor</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 2: PANEL DE AJUSTES MAESTROS
+       ========================================================================== -->
+  <div class="modal-backdrop" id="modalAdminPanel">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title">Panel de Mando Maestro</h3>
+        <button class="modal-close-btn" onclick="AppCore.closeModal('modalAdminPanel')">&times;</button>
+      </div>
+
+      <div style="background:rgba(0,102,255,0.08); border:1px solid rgba(0,102,255,0.25); border-radius:var(--radius-md); padding:14px; margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:700; color:var(--color-blue); text-transform:uppercase;">URL Google Apps Script (Web App):</span>
+          <span id="backendStatusTag" class="status-badge fecha">Verificando...</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <input type="url" id="inputBackendUrl" class="form-input" style="font-size:0.8rem; padding:8px 12px;" placeholder="https://script.google.com/macros/s/.../exec">
+          <button type="button" class="action-btn-sm action-btn-approve" onclick="AppCore.saveBackendUrl()">Guardar</button>
+        </div>
+      </div>
+
+      <div style="display:flex; border-bottom:1px solid var(--border-subtle); margin-bottom:18px; gap:10px;">
+        <button class="action-btn-sm active" id="tabUsersBtn" onclick="AppCore.switchAdminTab('users')">1. Solicitudes de Usuarios</button>
+        <button class="action-btn-sm" id="tabModulesBtn" onclick="AppCore.switchAdminTab('modules')">2. Gestión de Módulos</button>
+      </div>
+
+      <div id="adminTabUsers">
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr><th>ID</th><th>Usuario</th><th>Correo</th><th>Estado</th><th style="text-align:right;">Acciones</th></tr>
+            </thead>
+            <tbody id="adminUsersTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="adminTabModules" style="display:none;">
+        <div id="adminModulesList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 3: PIN SECUNDARIO DE MÓDULO (DELEGADO AL BACKEND)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="modalModulePin">
+    <div class="modal-container" style="max-width: 400px; text-align: center;">
+      <div class="modal-header" style="justify-content: center;">
+        <h3 class="modal-title" id="modulePinTitle">PIN Requerido</h3>
+        <button class="modal-close-btn" onclick="AppCore.closeModal('modalModulePin')">&times;</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+        Ingrese su <strong>PIN secundario</strong> para verificar autorización de acceso en el servidor:
+      </p>
+      <div class="form-group">
+        <input type="password" id="inputSecPin" class="form-input" style="text-align: center; font-size: 1.5rem; letter-spacing: 6px; color: var(--color-yellow);" placeholder="••••" maxlength="6">
+      </div>
+      <div id="secPinAlert" class="alert-banner danger" style="display: none;"></div>
+      <button type="button" class="btn-tricolor" onclick="AppCore.submitModulePin()">
+        <span>Validar en Servidor</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- LOADER TRICOLOR 3 ARCOS -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div style="display:flex; flex-direction:column; align-items:center; gap:16px;">
+      <div class="tricolor-spinner">
+        <svg viewBox="0 0 100 100" fill="none">
+          <circle cx="50" cy="50" r="42" stroke-width="4.5" class="spinner-arc-yellow" />
+          <circle cx="50" cy="50" r="32" stroke-width="4.5" class="spinner-arc-blue" />
+          <circle cx="50" cy="50" r="22" stroke-width="4.5" class="spinner-arc-red" />
+          <circle cx="50" cy="50" r="4" fill="#ffffff" />
+        </svg>
+      </div>
+      <span style="font-size:0.88rem; font-weight:700; color:var(--text-muted);" id="loadingMsg">
+        Validando con Google Apps Script...
+      </span>
+    </div>
+  </div>
+
+  <!-- TOASTS -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- INCLUSIÓN DE MÓDULOS AISLADOS -->
+  <script src="monitores/votos.js"></script>
+  <script src="monitores/rrhh.js"></script>
+
+  <!-- ==========================================================================
+       LÓGICA DEL CASCARÓN PRINCIPAL (CERO CREDENCIALES EN FRONTEND)
+       ========================================================================== -->
+  <script>
+    /**
+     * CONSTANTE GLOBAL DE ACCESO AL BACKEND
+     * CERO CREDENCIALES: El frontend no almacena contraseñas, PINs ni llaves maestras.
+     */
+    const API_URL = localStorage.getItem('INST_API_URL') || "URL_DE_APPS_SCRIPT";
+
+    window.AppCore = (function () {
+      let state = {
+        theme: localStorage.getItem('inst_theme') || 'dark',
+        apiUrl: API_URL,
+        currentUser: JSON.parse(localStorage.getItem('inst_auth_user') || 'null'),
+        masterPinValidated: false,
+        activeModule: null,
+        pendingModuleTarget: null,
+        modules: []
+      };
+
+      function init() {
+        applyTheme(state.theme);
+        setupEventListeners();
+        updateBackendStatusBadge();
+
+        if (state.currentUser && state.currentUser.estado === "ACTIVO") {
+          showDashboardMenu();
+        } else {
+          showAuthView();
+        }
+      }
+
+      function applyTheme(theme) {
+        state.theme = theme;
+        document.body.setAttribute('data-theme', theme);
+        localStorage.setItem('inst_theme', theme);
+        document.getElementById('iconSun').style.display = (theme === 'dark') ? 'block' : 'none';
+        document.getElementById('iconMoon').style.display = (theme === 'dark') ? 'none' : 'block';
+      }
+
+      function toggleTheme() {
+        applyTheme(state.theme === 'dark' ? 'light' : 'dark');
+      }
+
+      function showLoading(msg = "Procesando...") {
+        document.getElementById('loadingMsg').innerText = msg;
+        document.getElementById('loadingOverlay').classList.add('active');
+      }
+
+      function hideLoading() {
+        document.getElementById('loadingOverlay').classList.remove('active');
+      }
+
+      function showToast(msg, type = "success") {
+        const c = document.getElementById('toastContainer');
+        const t = document.createElement('div');
+        t.className = `toast-item ${type}`;
+        t.innerHTML = `<span>${msg}</span>`;
+        c.appendChild(t);
+        setTimeout(() => {
+          t.style.opacity = '0';
+          setTimeout(() => t.remove(), 300);
+        }, 3200);
+      }
+
+      /**
+       * Despacho universal POST al backend en Google Apps Script
+       */
+      async function postBackend(payload) {
+        if (!state.apiUrl || !state.apiUrl.startsWith('http')) {
+          throw new Error("Debe configurar primero la URL de Google Apps Script en la Tuerca de Ajustes.");
+        }
+        const resp = await fetch(state.apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+        return await resp.json();
+      }
+
+      /**
+       * Actualización bidireccional hacia Google Sheets (CRUD)
+       */
+      async function updateRecord(payload) {
+        const json = await postBackend(payload);
+        if (!json.ok) throw new Error(json.msg || "Error al actualizar en Google Sheets.");
+        return json;
+      }
+
+      // ==========================================================================
+      // VISTA DE ACCESO (LOGIN & REGISTRO CON OTP)
+      // ==========================================================================
+      function showAuthView() {
+        document.getElementById('userPill').style.display = 'none';
+        document.getElementById('btnLogout').style.display = 'none';
+        const viewport = document.getElementById('app-viewport');
+
+        viewport.innerHTML = `
+          <div style="display:flex; justify-content:center; align-items:center; min-height:calc(100vh - 140px); padding:20px 10px;">
+            <div class="glass-card" style="width:100%; max-width:460px; padding:36px 30px;">
+              <div style="text-align:center; margin-bottom:26px;">
+                <h1 style="font-size:1.35rem; font-weight:900; margin-bottom:4px;">Acceso Institucional</h1>
+                <p style="font-size:0.85rem; color:var(--text-muted);">Autenticación Delegada en Google Apps Script</p>
+              </div>
+
+              <div id="authAlert" class="alert-banner" style="display:none;"></div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; background:var(--surface-glass-input); padding:4px; border-radius:var(--radius-full); margin-bottom:24px; gap:4px;">
+                <button id="tabAuthLogin" class="action-btn-sm" style="justify-content:center; padding:10px; border-radius:var(--radius-full); background:var(--surface-glass-card); color:var(--text-main);" onclick="AppCore.switchAuthTab('login')">Iniciar Sesión</button>
+                <button id="tabAuthReg" class="action-btn-sm" style="justify-content:center; padding:10px; border-radius:var(--radius-full); background:transparent; color:var(--text-muted);" onclick="AppCore.switchAuthTab('reg')">Registrar Cuenta</button>
+              </div>
+
+              <!-- FORM LOGIN -->
+              <form id="formLogin" onsubmit="AppCore.handleLoginSubmit(event)">
+                <div class="form-group">
+                  <label class="form-label">Usuario o Correo</label>
+                  <input type="text" id="loginUser" class="form-input" placeholder="ej. admin" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Contraseña</label>
+                  <input type="password" id="loginPass" class="form-input" placeholder="••••••••••••" required>
+                </div>
+                <button type="submit" class="btn-tricolor" style="margin-top:10px;">
+                  <span>Acceder al Sistema</span>
+                </button>
+              </form>
+
+              <!-- FORM REGISTRO CON OTP -->
+              <div id="formRegContainer" style="display:none;">
+                <form id="formRegStepA" onsubmit="AppCore.handleRegStepASubmit(event)">
+                  <div class="form-group">
+                    <label class="form-label">Nombre de Usuario</label>
+                    <input type="text" id="regUser" class="form-input" placeholder="ej. analista.sala" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Correo Institucional</label>
+                    <input type="email" id="regEmail" class="form-input" placeholder="usuario@institucion.gob.ve" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" id="regPass" class="form-input" minlength="6" required>
+                  </div>
+                  <button type="submit" class="btn-tricolor">
+                    <span>Enviar código de verificación</span>
+                  </button>
+                </form>
+
+                <div id="formRegStepB" style="display:none;">
+                  <div class="alert-banner info">
+                    <span>Ingrese los 6 dígitos OTP enviados a su correo:</span>
+                  </div>
+                  <div class="otp-container">
+                    <input type="text" maxlength="1" class="otp-input" id="otp_0">
+                    <input type="text" maxlength="1" class="otp-input" id="otp_1">
+                    <input type="text" maxlength="1" class="otp-input" id="otp_2">
+                    <input type="text" maxlength="1" class="otp-input" id="otp_3">
+                    <input type="text" maxlength="1" class="otp-input" id="otp_4">
+                    <input type="text" maxlength="1" class="otp-input" id="otp_5">
+                  </div>
+                  <button type="button" class="btn-tricolor" onclick="AppCore.handleConfirmOtp()">
+                    <span>Confirmar Registro</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        `;
+
+        setupOtpListeners();
+      }
+
+      function switchAuthTab(tab) {
+        const l = document.getElementById('formLogin');
+        const r = document.getElementById('formRegContainer');
+        const btnL = document.getElementById('tabAuthLogin');
+        const btnR = document.getElementById('tabAuthReg');
+        if (tab === 'login') {
+          l.style.display = 'block';
+          r.style.display = 'none';
+          btnL.style.background = 'var(--surface-glass-card)';
+          btnL.style.color = 'var(--text-main)';
+          btnR.style.background = 'transparent';
+          btnR.style.color = 'var(--text-muted)';
+        } else {
+          l.style.display = 'none';
+          r.style.display = 'block';
+          btnR.style.background = 'var(--surface-glass-card)';
+          btnR.style.color = 'var(--text-main)';
+          btnL.style.background = 'transparent';
+          btnL.style.color = 'var(--text-muted)';
+        }
+      }
+
+      /**
+       * Autenticación 100% delegada en Apps Script (CERO comparación local)
+       */
+      async function handleLoginSubmit(e) {
+        e.preventDefault();
+        const u = document.getElementById('loginUser').value.trim();
+        const p = document.getElementById('loginPass').value;
+
+        showLoading("Validando credenciales en Google Apps Script...");
+
+        try {
+          const res = await postBackend({
+            accion: "login",
+            identificador: u,
+            password: p
+          });
+          hideLoading();
+
+          if (res.ok) {
+            state.currentUser = res.user;
+            localStorage.setItem('inst_auth_user', JSON.stringify(res.user));
+            showDashboardMenu();
+          } else {
+            showAuthAlert(res.msg || "Acceso denegado.", res.estado === "PENDIENTE" ? "warning" : "danger");
+          }
+        } catch (err) {
+          hideLoading();
+          showAuthAlert(err.message || "Error al conectar con Google Apps Script.", "danger");
+        }
+      }
+
+      let tempReg = null;
+
+      async function handleRegStepASubmit(e) {
+        e.preventDefault();
+        const u = document.getElementById('regUser').value.trim();
+        const em = document.getElementById('regEmail').value.trim();
+        const p = document.getElementById('regPass').value;
+        tempReg = { usuario: u, correo: em, password: p };
+
+        showLoading("Despachando código OTP al correo...");
+        try {
+          const res = await postBackend({
+            accion: "solicitar_codigo",
+            usuario: u,
+            correo: em
+          });
+          hideLoading();
+
+          if (res.ok) {
+            document.getElementById('formRegStepA').style.display = 'none';
+            document.getElementById('formRegStepB').style.display = 'block';
+            showToast("Código de 6 dígitos enviado.", "info");
+          } else {
+            showAuthAlert(res.msg || "Error al solicitar código OTP.", "danger");
+          }
+        } catch (err) {
+          hideLoading();
+          showAuthAlert(err.message, "danger");
+        }
+      }
+
+      function setupOtpListeners() {
+        for (let i = 0; i < 6; i++) {
+          const inp = document.getElementById(`otp_${i}`);
+          if (!inp) continue;
+          inp.addEventListener('input', (e) => {
+            if (e.target.value && i < 5) document.getElementById(`otp_${i+1}`).focus();
+          });
+        }
+      }
+
+      async function handleConfirmOtp() {
+        let code = "";
+        for (let i = 0; i < 6; i++) code += (document.getElementById(`otp_${i}`).value || "");
+
+        showLoading("Confirmando registro en servidor...");
+        try {
+          const res = await postBackend({
+            accion: "registrar",
+            usuario: tempReg.usuario,
+            correo: tempReg.correo,
+            password: tempReg.password,
+            otp: code
+          });
+          hideLoading();
+
+          if (res.ok) {
+            switchAuthTab('login');
+            showAuthAlert("Solicitud enviada. Tu cuenta debe ser aprobada por el administrador", "success");
+          } else {
+            showAuthAlert(res.msg || "Código OTP incorrecto.", "danger");
+          }
+        } catch (err) {
+          hideLoading();
+          showAuthAlert(err.message, "danger");
+        }
+      }
+
+      function showAuthAlert(msg, type) {
+        const a = document.getElementById('authAlert');
+        if (!a) return;
+        a.className = `alert-banner ${type}`;
+        a.innerText = msg;
+        a.style.display = 'block';
+      }
+
+      // ==========================================================================
+      // MENÚ DE MÓDULOS DINÁMICO
+      // ==========================================================================
+      async function showDashboardMenu() {
+        if (state.activeModule && state.activeModule.unmount) {
+          state.activeModule.unmount();
+          state.activeModule = null;
+        }
+
+        const viewport = document.getElementById('app-viewport');
+        document.getElementById('userPill').style.display = 'flex';
+        document.getElementById('btnLogout').style.display = 'inline-flex';
+        document.getElementById('navUsername').innerText = state.currentUser ? state.currentUser.usuario : "operador";
+
+        viewport.innerHTML = `
+          <div style="margin-bottom:30px;">
+            <span style="font-size:0.75rem; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--color-yellow);">
+              PLATAFORMA CENTRALIZADA DE CONTROL
+            </span>
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px; margin-top:4px;">
+              <div>
+                <h2 style="font-size:1.8rem; font-weight:900; letter-spacing:-0.5px;">Monitores Institucionales</h2>
+                <p style="color:var(--text-muted); font-size:0.9rem; margin-top:4px;">
+                  Sincronización en vivo con Google Sheets &bull; Cero Credenciales en Frontend
+                </p>
+              </div>
+              <div class="status-badge activo" style="padding:6px 14px;">
+                <span class="status-dot-active"></span>
+                <span>Canal Criptográfico Activo</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="modules-grid" id="menuCardsContainer"></div>
+        `;
+
+        await loadModules();
+        renderMenuCards();
+      }
+
+      async function loadModules() {
+        try {
+          if (state.apiUrl && state.apiUrl.startsWith('http')) {
+            const resp = await fetch(state.apiUrl);
+            const json = await resp.json();
+            if (json.ok && json.modulos) {
+              state.modules = json.modulos;
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn("[AppCore] Falla cargando módulos desde Google Sheets:", e);
+        }
+
+        // Módulos base por defecto
+        state.modules = [
+          { id: "votos", nombre: "Monitor de Votos", descripcion: "Control situacional y actas electorales", icono: "ballot", estado: "ACTIVO", requiere_pin: false },
+          { id: "rrhh", nombre: "Estadísticas de Personal", descripcion: "Nómina y asistencia de áreas", icono: "users", estado: "ACTIVO", requiere_pin: false }
+        ];
+      }
+
+      function renderMenuCards() {
+        const container = document.getElementById('menuCardsContainer');
+        if (!container) return;
+        container.innerHTML = '';
+
+        state.modules.forEach(m => {
+          const card = document.createElement('div');
+          card.className = `glass-card module-card state-${m.estado.toLowerCase()}`;
+
+          let badgeHtml = `<span class="status-badge ${m.estado.toLowerCase()}">${m.estado}</span>`;
+          let btnHtml = '';
+          let countdownHtml = '';
+
+          if (m.estado === 'ACTIVO') {
+            const pinBadge = m.requiere_pin ? `<span style="font-size:0.7rem; font-weight:800; color:var(--color-yellow); background:rgba(255,204,0,0.15); padding:2px 8px; border-radius:10px;">🔒 PIN</span>` : '';
+            btnHtml = `
+              <button class="module-btn" onclick="AppCore.launchModule('${m.id}')">
+                <span>Ingresar al Monitor</span>
+                ${pinBadge}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4L10.59 5.41L16.17 11H4V13H16.17L10.59 18.59L12 20L20 12L12 4Z"/></svg>
+              </button>
+            `;
+          } else if (m.estado === 'BLOQUEADO') {
+            btnHtml = `<button class="module-btn" disabled><span>No habilitado temporalmente</span></button>`;
+          } else if (m.estado === 'FECHA') {
+            countdownHtml = `
+              <div class="countdown-box" id="cd_box_${m.id}">
+                <div><div class="countdown-num" id="cd_d_${m.id}">00</div><div class="countdown-lbl">Días</div></div>
+                <div><div class="countdown-num" id="cd_h_${m.id}">00</div><div class="countdown-lbl">Horas</div></div>
+                <div><div class="countdown-num" id="cd_m_${m.id}">00</div><div class="countdown-lbl">Min</div></div>
+                <div><div class="countdown-num" id="cd_s_${m.id}">00</div><div class="countdown-lbl">Seg</div></div>
+              </div>
+            `;
+            btnHtml = `<button class="module-btn" style="color:var(--color-yellow);"><span>Apertura Programada</span></button>`;
+          }
+
+          card.innerHTML = `
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px;">
+                <div class="module-icon-wrap">${getModuleIconSvg(m.icono)}</div>
+                ${badgeHtml}
+              </div>
+              <h3 style="font-size:1.2rem; font-weight:800; margin-bottom:8px;">${m.nombre}</h3>
+              <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5;">${m.descripcion}</p>
+              ${countdownHtml}
+            </div>
+            <div style="margin-top:20px;">
+              ${btnHtml}
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+
+      function getModuleIconSvg(tipo) {
+        if (tipo === 'ballot' || tipo === 'vote') {
+          return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg>`;
+        }
+        return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11C17.66 11 18.99 9.66 18.99 8C18.99 6.34 17.66 5 16 5C14.34 5 13 6.34 13 8C13 9.66 14.34 11 16 11ZM8 11C9.66 11 10.99 9.66 10.99 8C10.99 6.34 9.66 5 8 5C6.34 5 5 6.34 5 8C5 9.66 6.34 11 8 11ZM8 13C5.67 13 1 14.17 1 16.5V19H15V16.5C15 14.17 10.33 13 8 13ZM16 13C15.71 13 15.38 13.02 15.03 13.05C16.19 13.89 17 15.02 17 16.5V19H23V16.5C23 14.17 18.33 13 16 13Z"/></svg>`;
+      }
+
+      function launchModule(modId) {
+        const mod = state.modules.find(m => m.id === modId);
+        if (!mod || mod.estado !== 'ACTIVO') return;
+
+        if (mod.requiere_pin) {
+          state.pendingModuleTarget = mod;
+          document.getElementById('modulePinTitle').innerText = `PIN Requerido: ${mod.nombre}`;
+          document.getElementById('inputSecPin').value = '';
+          document.getElementById('secPinAlert').style.display = 'none';
+          openModal('modalModulePin');
+          setTimeout(() => document.getElementById('inputSecPin').focus(), 200);
+        } else {
+          executeModuleMount(mod);
+        }
+      }
+
+      /**
+       * Verificación de PIN de módulo delegada en Apps Script
+       */
+      async function submitModulePin() {
+        const pin = document.getElementById('inputSecPin').value.trim();
+        const mod = state.pendingModuleTarget;
+        if (!mod || !pin) return;
+
+        showLoading("Verificando credencial de módulo en Apps Script...");
+        try {
+          const res = await postBackend({
+            accion: "verificar_pin_modulo",
+            id_modulo: mod.id,
+            pin: pin
+          });
+          hideLoading();
+
+          if (res.ok) {
+            closeModal('modalModulePin');
+            executeModuleMount(mod);
+          } else {
+            const a = document.getElementById('secPinAlert');
+            a.innerText = res.msg || "PIN incorrecto.";
+            a.style.display = 'block';
+          }
+        } catch (err) {
+          hideLoading();
+          const a = document.getElementById('secPinAlert');
+          a.innerText = err.message;
+          a.style.display = 'block';
+        }
+      }
+
+      function executeModuleMount(mod) {
+        const viewport = document.getElementById('app-viewport');
+        if ((mod.id === "votos" || mod.id.includes("VOT")) && window.MonitorVotos) {
+          state.activeModule = window.MonitorVotos;
+          window.MonitorVotos.mount(viewport);
+        } else if ((mod.id === "rrhh" || mod.id.includes("RH")) && window.MonitorRRHH) {
+          state.activeModule = window.MonitorRRHH;
+          window.MonitorRRHH.mount(viewport);
+        } else {
+          alert(`Módulo '${mod.nombre}' en desarrollo.`);
+        }
+      }
+
+      // ==========================================================================
+      // AJUSTES MAESTROS (VERIFICACIÓN DE PIN 100% DELEGADA AL SERVIDOR)
+      // ==========================================================================
+      function openSettings() {
+        if (state.masterPinValidated) {
+          showAdminPanel();
+        } else {
+          document.getElementById('inputMasterPin').value = '';
+          document.getElementById('masterPinAlert').style.display = 'none';
+          openModal('modalMasterPin');
+          setTimeout(() => document.getElementById('inputMasterPin').focus(), 200);
+        }
+      }
+
+      /**
+       * NO existe comparación local 'if (pin === ...)'
+       * Envía `{ accion: "verificar_pin", pin: input }` al Apps Script.
+       */
+      async function verifyMasterPin() {
+        const pin = document.getElementById('inputMasterPin').value.trim();
+        if (!pin) return;
+
+        showLoading("Verificando autorización en el servidor...");
+
+        try {
+          const res = await postBackend({
+            accion: "verificar_pin",
+            pin: pin
+          });
+          hideLoading();
+
+          if (res.ok) {
+            state.masterPinValidated = true;
+            closeModal('modalMasterPin');
+            showAdminPanel();
+          } else {
+            const a = document.getElementById('masterPinAlert');
+            a.innerText = res.msg || "PIN Maestro no autorizado.";
+            a.style.display = 'block';
+          }
+        } catch (err) {
+          hideLoading();
+          const a = document.getElementById('masterPinAlert');
+          a.innerText = err.message;
+          a.style.display = 'block';
+        }
+      }
+
+      function showAdminPanel() {
+        document.getElementById('inputBackendUrl').value = state.apiUrl;
+        loadAdminUsers();
+        openModal('modalAdminPanel');
+      }
+
+      function switchAdminTab(t) {
+        const u = document.getElementById('adminTabUsers');
+        const m = document.getElementById('adminTabModules');
+        const bU = document.getElementById('tabUsersBtn');
+        const bM = document.getElementById('tabModulesBtn');
+        if (t === 'users') {
+          u.style.display = 'block';
+          m.style.display = 'none';
+          bU.classList.add('active');
+          bM.classList.remove('active');
+          loadAdminUsers();
+        } else {
+          u.style.display = 'none';
+          m.style.display = 'block';
+          bM.classList.add('active');
+          bU.classList.remove('active');
+          renderAdminModules();
+        }
+      }
+
+      async function loadAdminUsers() {
+        const tbody = document.getElementById('adminUsersTbody');
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Cargando usuarios desde hoja Usuarios...</td></tr>`;
+
+        try {
+          const res = await postBackend({
+            accion: "admin_accion",
+            subaction: "obtener_usuarios",
+            pin_maestro: document.getElementById('inputMasterPin').value.trim()
+          });
+
+          if (res.ok && res.usuarios) {
+            tbody.innerHTML = res.usuarios.map(u => `
+              <tr>
+                <td><strong>${u.id}</strong></td>
+                <td>${u.usuario}</td>
+                <td>${u.correo}</td>
+                <td><span class="status-badge ${u.estado.toLowerCase()}">${u.estado}</span></td>
+                <td style="text-align:right;">
+                  ${u.estado === 'PENDIENTE' ? `
+                    <button class="action-btn-sm action-btn-approve" onclick="AppCore.changeUserStatus('${u.usuario}', 'ACTIVO')">Aprobar</button>
+                    <button class="action-btn-sm action-btn-reject" onclick="AppCore.changeUserStatus('${u.usuario}', 'RECHAZAR')">Rechazar</button>
+                  ` : `
+                    <button class="action-btn-sm action-btn-reject" onclick="AppCore.changeUserStatus('${u.usuario}', 'SUSPENDIDO')">Suspender</button>
+                  `}
+                </td>
+              </tr>
+            `).join("");
+          }
+        } catch (e) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Configure la URL del Apps Script para listar usuarios en vivo.</td></tr>`;
+        }
+      }
+
+      async function changeUserStatus(usuario, nuevoEstado) {
+        showLoading(`Actualizando a ${nuevoEstado}...`);
+        try {
+          await postBackend({
+            accion: "admin_accion",
+            subaction: "cambiar_estado_usuario",
+            pin_maestro: document.getElementById('inputMasterPin').value.trim(),
+            usuario: usuario,
+            nuevo_estado: nuevoEstado
+          });
+          hideLoading();
+          loadAdminUsers();
+          showToast(`Usuario ${usuario} actualizado.`);
+        } catch (err) {
+          hideLoading();
+          alert(err.message);
+        }
+      }
+
+      function renderAdminModules() {
+        const cont = document.getElementById('adminModulesList');
+        cont.innerHTML = state.modules.map(m => `
+          <div style="background:var(--surface-glass-input); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px; margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <strong>${m.nombre} (${m.id})</strong>
+              <span class="status-badge ${m.estado.toLowerCase()}">${m.estado}</span>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; align-items:flex-end;">
+              <div>
+                <label class="form-label">Estado:</label>
+                <select class="form-input" style="padding:6px 10px;" onchange="AppCore.updateModuleState('${m.id}', this.value)">
+                  <option value="ACTIVO" ${m.estado === 'ACTIVO' ? 'selected' : ''}>ACTIVO</option>
+                  <option value="BLOQUEADO" ${m.estado === 'BLOQUEADO' ? 'selected' : ''}>BLOQUEADO</option>
+                  <option value="FECHA" ${m.estado === 'FECHA' ? 'selected' : ''}>FECHA</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      async function updateModuleState(id, estado) {
+        showLoading("Actualizando directiva en Apps Script...");
+        try {
+          await postBackend({
+            accion: "admin_accion",
+            subaction: "actualizar_modulo",
+            pin_maestro: document.getElementById('inputMasterPin').value.trim(),
+            id: id,
+            estado: estado
+          });
+          hideLoading();
+          const mod = state.modules.find(x => x.id === id);
+          if (mod) mod.estado = estado;
+          showToast(`Módulo ${id} configurado.`);
+        } catch (err) {
+          hideLoading();
+          alert(err.message);
+        }
+      }
+
+      function saveBackendUrl() {
+        const u = document.getElementById('inputBackendUrl').value.trim();
+        state.apiUrl = u;
+        localStorage.setItem('INST_API_URL', u);
+        updateBackendStatusBadge();
+        showToast("URL de Google Apps Script guardada.", "success");
+      }
+
+      function updateBackendStatusBadge() {
+        const b = document.getElementById('backendStatusTag');
+        if (!b) return;
+        if (state.apiUrl && state.apiUrl.startsWith('http')) {
+          b.innerText = "Conectado a Apps Script";
+          b.className = "status-badge activo";
+        } else {
+          b.innerText = "Falta Configurar URL";
+          b.className = "status-badge fecha";
+        }
+      }
+
+      function handleLogout() {
+        if (confirm("¿Cerrar sesión institucional?")) {
+          state.currentUser = null;
+          state.masterPinValidated = false;
+          localStorage.removeItem('inst_auth_user');
+          showAuthView();
+        }
+      }
+
+      function openModal(id) { const m = document.getElementById(id); if (m) m.classList.add('open'); }
+      function closeModal(id) { const m = document.getElementById(id); if (m) m.classList.remove('open'); }
+
+      function setupEventListeners() {
+        document.getElementById('btnThemeToggle').addEventListener('click', toggleTheme);
+        document.getElementById('btnOpenSettings').addEventListener('click', openSettings);
+        document.getElementById('btnLogout').addEventListener('click', handleLogout);
+
+        document.querySelectorAll('.modal-backdrop').forEach(modal => {
+          modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.remove('open');
+          });
+        });
+      }
+
+      return {
+        init,
+        API_URL: state.apiUrl,
+        showDashboardMenu,
+        launchModule,
+        submitModulePin,
+        openSettings,
+        verifyMasterPin,
+        saveBackendUrl,
+        switchAdminTab,
+        changeUserStatus,
+        updateModuleState,
+        updateRecord,
+        showLoading,
+        hideLoading,
+        showToast,
+        openModal,
+        closeModal,
+        switchAuthTab,
+        handleLoginSubmit,
+        handleRegStepASubmit,
+        handleConfirmOtp
+      };
+    })();
+
+    document.addEventListener("DOMContentLoaded", () => {
+      AppCore.init();
+    });
+  </script>
+</body>
+</html>
