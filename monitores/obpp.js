@@ -19,10 +19,11 @@ window.MonitorOBPP = (function () {
   let baseDatos = [];
   let datosFiltradosGlobal = [];
   let paginaActual = 1;
-  let tamanoPagina = 100;
+  let tamanoPagina = 25;
   let totalPaginas = 1;
   let modoVistaTabla = true;
   let loaderInterval = null;
+  let searchDebounceTimer = null;
 
   let estadoFiltros = {
     municipio: 'TODOS',
@@ -64,9 +65,9 @@ window.MonitorOBPP = (function () {
     style.id = 'styles-monitor-obpp';
     style.innerHTML = `
       #obpp-monitor-scope {
-        --obpp-bg-card: rgba(13, 19, 33, 0.78);
-        --obpp-bg-card-hover: rgba(22, 32, 54, 0.92);
-        --obpp-border: rgba(255, 255, 255, 0.12);
+        --obpp-bg-card: rgba(13, 20, 36, 0.95);
+        --obpp-bg-card-hover: rgba(20, 32, 58, 0.98);
+        --obpp-border: rgba(255, 255, 255, 0.1);
         --obpp-text: #f8fafc;
         --obpp-text-muted: #cbd5e1;
         --obpp-accent: #38bdf8;
@@ -81,40 +82,24 @@ window.MonitorOBPP = (function () {
         min-height: 100%;
         color: var(--obpp-text);
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: radial-gradient(circle at 10% 8%, rgba(255, 204, 0, 0.04) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 30%, rgba(0, 102, 255, 0.05) 0%, transparent 45%),
+                    radial-gradient(circle at 20% 90%, rgba(207, 20, 43, 0.04) 0%, transparent 40%),
+                    #090d18;
       }
-
-      /* Orbes de fondo ambientales */
-      #obpp-monitor-scope .obpp-orb-bg {
-        position: absolute;
-        inset: 0;
-        overflow: hidden;
-        pointer-events: none;
-        z-index: 0;
-      }
-      #obpp-monitor-scope .obpp-orb {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(95px);
-        opacity: 0.35;
-      }
-      #obpp-monitor-scope .obpp-orb-1 { width: 380px; height: 380px; background: radial-gradient(circle, #facc15 0%, #ca8a04 100%); top: -5%; left: -5%; }
-      #obpp-monitor-scope .obpp-orb-2 { width: 440px; height: 440px; background: radial-gradient(circle, #2563eb 0%, #1e3a8a 100%); top: 30%; right: -10%; }
-      #obpp-monitor-scope .obpp-orb-3 { width: 400px; height: 400px; background: radial-gradient(circle, #ef4444 0%, #991b1b 100%); bottom: -5%; left: 20%; }
 
       /* Loader Interno */
       #obppLoader,
       #obpp-loader {
         position: absolute;
         inset: 0;
-        background: rgba(6, 9, 19, 0.92);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
+        background: rgba(6, 9, 19, 0.95);
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         z-index: 1000;
-        transition: opacity 0.35s ease;
+        transition: opacity 0.25s ease;
       }
       #obppLoader.fade-out,
       #obpp-loader.fade-out {
@@ -123,12 +108,12 @@ window.MonitorOBPP = (function () {
       }
       .obpp-ring-wrap {
         position: relative;
-        width: 90px;
-        height: 90px;
+        width: 80px;
+        height: 80px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 18px;
+        margin-bottom: 16px;
       }
       .obpp-ring {
         position: absolute;
@@ -155,7 +140,7 @@ window.MonitorOBPP = (function () {
         width: 0%;
         background: linear-gradient(90deg, var(--obpp-amarillo), var(--obpp-azul), var(--obpp-rojo));
         border-radius: 4px;
-        transition: width 0.35s ease-out;
+        transition: width 0.25s ease-out;
       }
 
       /* Barra Superior */
@@ -168,8 +153,6 @@ window.MonitorOBPP = (function () {
         margin-bottom: 20px;
         padding: 16px 20px;
         background: var(--obpp-bg-card);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
         border: 1px solid var(--obpp-border);
         border-radius: 14px;
         position: relative;
@@ -262,8 +245,6 @@ window.MonitorOBPP = (function () {
       }
       .obpp-nav-btn {
         background: var(--obpp-bg-card);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
         border: 1px solid var(--obpp-border);
         color: var(--obpp-text);
         padding: 12px 10px;
@@ -275,7 +256,7 @@ window.MonitorOBPP = (function () {
         flex-direction: column;
         align-items: center;
         gap: 6px;
-        transition: all 0.2s ease;
+        transition: transform 0.15s ease, background 0.15s ease;
         text-align: center;
       }
       .obpp-nav-btn:hover, .obpp-nav-btn.active {
@@ -306,10 +287,8 @@ window.MonitorOBPP = (function () {
       /* Paneles Desplegables (Drawers) */
       .obpp-drawer {
         display: none;
-        background: rgba(10, 15, 28, 0.95);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: #0d1424;
+        border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 12px;
         padding: 16px;
         margin-bottom: 18px;
@@ -363,15 +342,13 @@ window.MonitorOBPP = (function () {
       }
       .obpp-kpi-card {
         background: var(--obpp-bg-card);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
         border: 1px solid var(--obpp-border);
         border-radius: 13px;
         padding: 14px;
         position: relative;
         overflow: hidden;
         cursor: pointer;
-        transition: transform 0.2s ease;
+        transition: transform 0.15s ease;
       }
       .obpp-kpi-card:hover { transform: translateY(-3px); }
       .obpp-kpi-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
@@ -508,13 +485,6 @@ window.MonitorOBPP = (function () {
 
     containerRef.innerHTML = `
       <div id="obpp-monitor-scope">
-        <!-- Orbes de fondo -->
-        <div class="obpp-orb-bg">
-          <div class="obpp-orb obpp-orb-1"></div>
-          <div class="obpp-orb obpp-orb-2"></div>
-          <div class="obpp-orb obpp-orb-3"></div>
-        </div>
-
         <!-- Loader Interno -->
         <div id="obppLoader">
           <div class="obpp-ring-wrap">
@@ -576,7 +546,7 @@ window.MonitorOBPP = (function () {
               <span>Limpiar Filtros</span>
             </button>
 
-            <button class="obpp-btn-action" onclick="window.MonitorOBPP.recargarServidor()">
+            <button class="obpp-btn-action" onclick="window.MonitorOBPP.recargarServidor(true)">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4C7.58 4 4.01 7.58 4.01 12C4.01 16.42 7.58 20 12 20C15.73 20 18.84 17.45 19.73 14H17.65C16.83 16.33 14.61 18 12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C13.66 6 15.14 6.69 16.22 7.78L13 11H20V4L17.65 6.35Z"/></svg>
               <span>Actualizar</span>
             </button>
@@ -756,9 +726,10 @@ window.MonitorOBPP = (function () {
             <div style="display:flex; align-items:center; gap:8px;">
               <label style="font-size:0.75rem; color:var(--obpp-text-muted);">Mostrar por página:</label>
               <select id="obppSelTamanoPagina" class="form-input" style="width:auto; padding:4px 10px; font-size:0.75rem;" onchange="window.MonitorOBPP.cambiarTamanoPagina(this.value)">
-                <option value="100" selected>100</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
                 <option value="250">250</option>
-                <option value="500">500</option>
                 <option value="TODOS">Todos</option>
               </select>
             </div>
@@ -926,14 +897,62 @@ window.MonitorOBPP = (function () {
     }
   }
 
+  async function sincronizarFondo(cacheKey, cacheTimeKey) {
+    try {
+      if (!window.AppCore || !window.AppCore.API_URL || !window.AppCore.API_URL.startsWith('http')) return;
+      const resp = await fetch(`${window.AppCore.API_URL}?data=obpp&t=${Date.now()}`);
+      const res = await resp.json();
+      if (res && (res.status === 'ok' || res.ok) && res.registros) {
+        baseDatos = res.registros;
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(baseDatos));
+          sessionStorage.setItem(cacheTimeKey, Date.now().toString());
+        } catch(e) {}
+        const sub = document.getElementById('obppInfoSubtitulo');
+        if (sub) sub.innerText = `Registros Consolidados: ${res.totalRegistros || baseDatos.length}`;
+        actualizarVista();
+      }
+    } catch(e) {
+      console.warn("[MonitorOBPP] Revalidación en segundo plano omitida:", e);
+    }
+  }
+
   /**
-   * Carga de datos desde el Servidor Central con manejo resiliente
+   * Carga de datos desde el Servidor Central con manejo resiliente y caché ultra-rápida (SWR)
    */
-  async function cargarDatosServidor() {
-    mostrarLoader('Cargando la Matriz', 'Sincronizando registros OBPP Monagas...');
+  async function cargarDatosServidor(forzar = false) {
+    const CACHE_KEY = 'OBPP_CACHE_REGISTROS_V2';
+    const CACHE_TIME_KEY = 'OBPP_CACHE_TIME_V2';
+    const ahora = Date.now();
+    const tiempoMaximo = 10 * 60 * 1000; // 10 minutos de caché ultra-rápida
+
+    if (!forzar) {
+      try {
+        const rawCache = sessionStorage.getItem(CACHE_KEY);
+        const cacheTime = parseInt(sessionStorage.getItem(CACHE_TIME_KEY) || '0', 10);
+        if (rawCache && (ahora - cacheTime) < tiempoMaximo) {
+          const parsed = JSON.parse(rawCache);
+          if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+            baseDatos = parsed;
+            const sub = document.getElementById('obppInfoSubtitulo');
+            if (sub) sub.innerText = `Registros Consolidados: ${baseDatos.length}`;
+            poblarSelectoresCascada();
+            actualizarVista();
+            // Revalidación silenciosa en background sin bloquear la pantalla
+            setTimeout(() => sincronizarFondo(CACHE_KEY, CACHE_TIME_KEY), 1000);
+            return;
+          }
+        }
+      } catch(e) {
+        console.warn("[MonitorOBPP] Aviso leyendo caché local:", e);
+      }
+    }
+
+    mostrarLoader('Cargando la Matriz', 'Sincronizando 1.370 registros en Servidor Central...');
     try {
       if (window.AppCore && window.AppCore.API_URL && window.AppCore.API_URL.startsWith('http')) {
-        const resp = await fetch(`${window.AppCore.API_URL}?data=obpp`);
+        const urlFetch = `${window.AppCore.API_URL}?data=obpp${forzar ? '&nocache=1&t=' + ahora : ''}`;
+        const resp = await fetch(urlFetch);
         const res = await resp.json();
 
         // Si el backend responde con error estructurado
@@ -946,6 +965,10 @@ window.MonitorOBPP = (function () {
         if (res && (res.status === 'ok' || res.ok) && res.registros) {
           ocultarLoader(true);
           baseDatos = res.registros;
+          try {
+            sessionStorage.setItem(CACHE_KEY, JSON.stringify(baseDatos));
+            sessionStorage.setItem(CACHE_TIME_KEY, ahora.toString());
+          } catch(e) {}
           const sub = document.getElementById('obppInfoSubtitulo');
           if (sub) sub.innerText = `Registros Consolidados: ${res.totalRegistros || baseDatos.length}`;
           poblarSelectoresCascada();
@@ -1033,10 +1056,12 @@ window.MonitorOBPP = (function () {
   function llenarSelect(id, opts, act, def) {
     const s = document.getElementById(id);
     if (!s) return;
-    s.innerHTML = `<option value="TODOS">${def} (${opts.length})</option>`;
-    opts.forEach(o => {
-      s.innerHTML += `<option value="${o}" ${o === act ? 'selected' : ''}>${o}</option>`;
-    });
+    let html = `<option value="TODOS">${def} (${opts.length})</option>`;
+    for (let i = 0; i < opts.length; i++) {
+      const o = opts[i];
+      html += `<option value="${o}" ${o === act ? 'selected' : ''}>${o}</option>`;
+    }
+    s.innerHTML = html;
   }
 
   function aplicarFiltro(campo, val) {
@@ -1056,9 +1081,12 @@ window.MonitorOBPP = (function () {
   }
 
   function aplicarBusquedaCC(txt) {
-    estadoFiltros.busqueda = txt.trim().toUpperCase();
-    paginaActual = 1;
-    actualizarVista();
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      estadoFiltros.busqueda = txt.trim().toUpperCase();
+      paginaActual = 1;
+      actualizarVista();
+    }, 180);
   }
 
   function aplicarFiltroCalendario(f) {
@@ -1122,27 +1150,55 @@ window.MonitorOBPP = (function () {
   }
 
   function actualizarVista() {
-    const pre = baseDatos.filter(r => {
-      if (estadoFiltros.municipio !== 'TODOS' && r.municipio !== estadoFiltros.municipio) return false;
-      if (estadoFiltros.parroquia !== 'TODOS' && r.parroquia !== estadoFiltros.parroquia) return false;
-      if (estadoFiltros.comuna !== 'TODOS' && r.comuna !== estadoFiltros.comuna) return false;
-      if (estadoFiltros.consejo !== 'TODOS' && r.consejo !== estadoFiltros.consejo) return false;
-      if (estadoFiltros.estatusSinco !== 'TODOS' && r.estatusSinco !== estadoFiltros.estatusSinco) return false;
-      if (estadoFiltros.busqueda && !r.consejo.includes(estadoFiltros.busqueda) && !(r.siturAct || "").toUpperCase().includes(estadoFiltros.busqueda)) return false;
-      if (estadoFiltros.fechaTope && (!r.fechaVenc || r.fechaVenc > estadoFiltros.fechaTope)) return false;
-      return true;
-    });
+    const pre = [];
+    const busq = estadoFiltros.busqueda;
+    const mun = estadoFiltros.municipio;
+    const par = estadoFiltros.parroquia;
+    const com = estadoFiltros.comuna;
+    const con = estadoFiltros.consejo;
+    const sinco = estadoFiltros.estatusSinco;
+    const fTope = estadoFiltros.fechaTope;
+    const rDias = estadoFiltros.rangoDias;
 
-    const bAlta = pre.filter(r => r.condicionBase === 'ALTA').length;
-    const rAlta = pre.filter(r => r.condicionBase === 'ALTA' && r.prioridad === 'RENOVADO').length;
+    for (let i = 0; i < baseDatos.length; i++) {
+      const r = baseDatos[i];
+      if (mun !== 'TODOS' && r.municipio !== mun) continue;
+      if (par !== 'TODOS' && r.parroquia !== par) continue;
+      if (com !== 'TODOS' && r.comuna !== com) continue;
+      if (con !== 'TODOS' && r.consejo !== con) continue;
+      if (sinco !== 'TODOS' && r.estatusSinco !== sinco) continue;
+      if (busq && !r.consejo.includes(busq) && !(r.siturAct || "").toUpperCase().includes(busq)) continue;
+      if (fTope && (!r.fechaVenc || r.fechaVenc > fTope)) continue;
+      if (rDias !== 'TODOS') {
+        const d = r.dias;
+        if (rDias === 'VENCIDOS' && (d === null || d > 0)) continue;
+        if (rDias === '30DIAS' && (d === null || d <= 0 || d > 30)) continue;
+        if (rDias === '90DIAS' && (d === null || d <= 30 || d > 90)) continue;
+        if (rDias === 'VIGENTES' && (d === null || d <= 90)) continue;
+      }
+      pre.push(r);
+    }
+
+    // Estadísticas consolidada en una sola pasada O(N)
+    let bAlta = 0, rAlta = 0, bMed = 0, rMed = 0, totalRenovados = 0, netoBaja = 0;
+    for (let i = 0; i < pre.length; i++) {
+      const r = pre[i];
+      const isRenov = (r.prioridad === 'RENOVADO' || r.renovado);
+      if (isRenov) totalRenovados++;
+
+      if (r.condicionBase === 'ALTA') {
+        bAlta++;
+        if (isRenov) rAlta++;
+      } else if (r.condicionBase === 'MEDIA') {
+        bMed++;
+        if (isRenov) rMed++;
+      } else if (r.prioridad === 'BAJA') {
+        netoBaja++;
+      }
+    }
+
     const netoAlta = bAlta - rAlta;
-
-    const bMed = pre.filter(r => r.condicionBase === 'MEDIA').length;
-    const rMed = pre.filter(r => r.condicionBase === 'MEDIA' && r.prioridad === 'RENOVADO').length;
     const netoMedia = bMed - rMed;
-
-    const totalRenovados = pre.filter(r => r.prioridad === 'RENOVADO' || r.renovado).length;
-    const netoBaja = pre.filter(r => r.prioridad === 'BAJA').length;
     const totalNeto = netoAlta + netoMedia + totalRenovados + netoBaja;
 
     const cT = document.getElementById('obppCntTodos');
@@ -1156,11 +1212,15 @@ window.MonitorOBPP = (function () {
     if (cR) cR.innerText = totalRenovados;
     if (cB) cB.innerText = netoBaja;
 
-    datosFiltradosGlobal = pre.filter(r => {
-      if (estadoFiltros.prioridad === 'TODOS') return true;
-      if (estadoFiltros.prioridad === 'RENOVADO') return r.prioridad === 'RENOVADO' || r.renovado;
-      return r.prioridad === estadoFiltros.prioridad;
-    });
+    // Filtrado por prioridad seleccionada
+    const prio = estadoFiltros.prioridad;
+    if (prio === 'TODOS') {
+      datosFiltradosGlobal = pre;
+    } else if (prio === 'RENOVADO') {
+      datosFiltradosGlobal = pre.filter(r => r.prioridad === 'RENOVADO' || r.renovado);
+    } else {
+      datosFiltradosGlobal = pre.filter(r => r.prioridad === prio);
+    }
 
     const kT = document.getElementById('obppKpiTotal');
     const kA = document.getElementById('obppKpiAlta');
@@ -1190,17 +1250,20 @@ window.MonitorOBPP = (function () {
   function renderizarEstatusSinco(datos) {
     const cont = document.getElementById('obppContenedorSinco');
     if (!cont) return;
-    cont.innerHTML = '';
     const counts = {};
-    datos.forEach(r => counts[r.estatusSinco] = (counts[r.estatusSinco] || 0) + 1);
+    for (let i = 0; i < datos.length; i++) {
+      const e = datos[i].estatusSinco;
+      counts[e] = (counts[e] || 0) + 1;
+    }
 
-    Object.entries(counts).sort((a,b)=>b[1]-a[1]).forEach(([est, cnt]) => {
-      const chip = document.createElement('button');
-      chip.className = 'obpp-sinco-chip' + (estadoFiltros.estatusSinco === est ? ' active' : '');
-      chip.onclick = () => filtrarSinco(est);
-      chip.innerHTML = `<span>${est}: <strong>${cnt}</strong></span>`;
-      cont.appendChild(chip);
-    });
+    const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    let html = '';
+    for (let j = 0; j < entries.length; j++) {
+      const [est, cnt] = entries[j];
+      const activeClass = (estadoFiltros.estatusSinco === est) ? ' active' : '';
+      html += `<button class="obpp-sinco-chip${activeClass}" onclick="window.MonitorOBPP.filtrarSinco('${est}')"><span>${est}: <strong>${cnt}</strong></span></button>`;
+    }
+    cont.innerHTML = html;
   }
 
   function renderizarResumenParroquias(datos) {
@@ -1316,10 +1379,17 @@ window.MonitorOBPP = (function () {
     if (bN) bN.disabled = (paginaActual >= totalPaginas);
     if (bL) bL.disabled = (paginaActual >= totalPaginas);
 
-    lote.forEach(r => {
-      const item = document.createElement('div');
-      item.className = `obpp-cc-item prio-${r.prioridad}`;
-      item.innerHTML = `
+    if (lote.length === 0) {
+      cont.innerHTML = `
+        <div style="padding: 30px; text-align: center; color: var(--obpp-text-muted); font-size: 0.9rem;">
+          No se encontraron Consejos Comunales con los filtros aplicados.
+        </div>
+      `;
+      return;
+    }
+
+    const htmlLote = lote.map(r => `
+      <div class="obpp-cc-item prio-${r.prioridad}">
         <div style="flex:1; min-width:260px;">
           <h4 style="font-size:0.9rem; font-weight:700; color:#fff; margin-bottom:4px;">${r.consejo}</h4>
           <div style="font-size:0.72rem; color:var(--obpp-text-muted); display:flex; flex-wrap:wrap; gap:10px;">
@@ -1344,9 +1414,10 @@ window.MonitorOBPP = (function () {
             </span>
           `}
         </div>
-      `;
-      cont.appendChild(item);
-    });
+      </div>
+    `).join('');
+
+    cont.innerHTML = htmlLote;
   }
 
   function abrirModalRegistroGeneral() {
@@ -1379,10 +1450,9 @@ window.MonitorOBPP = (function () {
   function filtrarSelectModalCC(txt) {
     const sel = document.getElementById('obppSelModalCC');
     if (!sel) return;
-    sel.innerHTML = '';
-    baseDatos.filter(r => !txt || r.consejo.includes(txt.toUpperCase())).slice(0, 150).forEach(r => {
-      sel.innerHTML += `<option value="${r.filaSheet}">${r.consejo} (${r.parroquia})</option>`;
-    });
+    const q = txt ? txt.toUpperCase().trim() : '';
+    const filtrados = baseDatos.filter(r => !q || r.consejo.includes(q)).slice(0, 150);
+    sel.innerHTML = filtrados.map(r => `<option value="${r.filaSheet}">${r.consejo} (${r.parroquia})</option>`).join('');
   }
 
   function cargarDatosCCEnModal(fila) {
